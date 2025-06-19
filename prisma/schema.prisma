@@ -1,0 +1,74 @@
+// 1. Conexión a la base de datos PostgreSQL
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 2. Generador de cliente Prisma (TypeScript 100% tipado)
+generator client {
+  provider = "prisma-client-js"
+}
+
+// 3. Definición de modelos
+
+model User {
+  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username     String    @unique
+  email        String    @unique
+  first_name   String
+  last_name    String
+  password_hash String
+  is_active    Boolean   @default(true)
+  is_verified  Boolean   @default(false)
+  password_changed_at DateTime?
+  force_password_change Boolean @default(false)
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  // Relación con OTPs
+  otps         Otp[]
+  refreshTokens RefreshToken[]
+  auditLogs    AuditLog[]
+
+  @@map("users") // Mapea al nombre real de tabla en Postgres
+}
+
+model Otp {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String
+  code       String   @db.Char(6)
+  type       String
+  expires_at DateTime
+  used       Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  // Relación inversa
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("otps")
+}
+
+model RefreshToken {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String
+  token      String   @unique
+  revoked    Boolean  @default(false)
+  created_at DateTime @default(now())
+  expires_at DateTime
+
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String?
+  event      String
+  details    Json
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("audit_logs")
+}
