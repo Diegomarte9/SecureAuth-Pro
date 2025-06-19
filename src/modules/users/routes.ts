@@ -20,6 +20,10 @@ usersRouter.use(authMiddleware);
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     description: >-
+ *       Requiere enviar el access token (JWT) en el header:
+ *       
+ *         Authorization: Bearer <accessToken>
  *     parameters:
  *       - in: query
  *         name: page
@@ -52,6 +56,10 @@ usersRouter.get(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     description: >-
+ *       Requiere enviar el access token (JWT) en el header:
+ *       
+ *         Authorization: Bearer <accessToken>
  *     parameters:
  *       - in: path
  *         name: id
@@ -76,12 +84,19 @@ usersRouter.get('/:id', asyncHandler((req, res, next) => users.findOne(req, res,
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     description: >-
+ *       Requiere enviar el access token (JWT) en el header:
+ *       
+ *         Authorization: Bearer <accessToken>
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateUserDto'
+ *           example:
+ *             email: user@example.com
+ *             password: Password123!
  *     responses:
  *       201:
  *         description: Usuario creado
@@ -103,6 +118,10 @@ usersRouter.post(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     description: >-
+ *       Requiere enviar el access token (JWT) en el header:
+ *       
+ *         Authorization: Bearer <accessToken>
  *     parameters:
  *       - in: path
  *         name: id
@@ -116,6 +135,15 @@ usersRouter.post(
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateUserDto'
+ *           example:
+ *             username: johndoe
+ *             email: johndoe@example.com
+ *             first_name: John
+ *             last_name: Doe
+ *             is_active: true
+ *             is_verified: true
+ *             password: Password123!
+ *             passwordConfirm: Password123!
  *     responses:
  *       200:
  *         description: Usuario actualizado
@@ -139,6 +167,10 @@ usersRouter.put(
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
+ *     description: >-
+ *       Requiere enviar el access token (JWT) en el header:
+ *       
+ *         Authorization: Bearer <accessToken>
  *     parameters:
  *       - in: path
  *         name: id
@@ -176,11 +208,30 @@ usersRouter.delete('/:id', asyncHandler((req, res, next) => users.remove(req, re
  *     UpdateUserDto:
  *       type: object
  *       properties:
+ *         username:
+ *           type: string
+ *           example: johndoe
  *         email:
  *           type: string
  *           format: email
- *           example: user@example.com
+ *           example: johndoe@example.com
+ *         first_name:
+ *           type: string
+ *           example: John
+ *         last_name:
+ *           type: string
+ *           example: Doe
+ *         is_active:
+ *           type: boolean
+ *           example: true
+ *         is_verified:
+ *           type: boolean
+ *           example: true
  *         password:
+ *           type: string
+ *           format: password
+ *           example: "Password123!"
+ *         passwordConfirm:
  *           type: string
  *           format: password
  *           example: "Password123!"

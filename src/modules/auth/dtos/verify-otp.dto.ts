@@ -1,4 +1,3 @@
-// src/modules/auth/dtos/verify-otp.dto.ts
 import { IsEmail, IsNotEmpty, Length } from 'class-validator';
 
 export class VerifyOtpDto {

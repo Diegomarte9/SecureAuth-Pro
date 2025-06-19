@@ -1,5 +1,5 @@
-// src/modules/users/dtos/create-user.dto.ts
-import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches, Validate } from 'class-validator';
+import { PasswordsMatchValidator } from '../../../shared/passwordsMatch.validator';
 
 export class CreateUserDto {
   @IsString()
@@ -18,10 +18,12 @@ export class CreateUserDto {
   last_name!: string;
 
   @IsString()
-  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/, {
+    message: 'La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula, un número y un símbolo'
+  })
   password!: string;
 
   @IsString()
-  @Matches((o: CreateUserDto) => o.password, { message: 'Las contraseñas no coinciden' })
+  @Validate(PasswordsMatchValidator, ['password', 'passwordConfirm'])
   passwordConfirm!: string;
 }

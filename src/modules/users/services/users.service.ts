@@ -1,5 +1,5 @@
 // src/modules/users/services/users.service.ts
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { auditLog } from '../../../shared/auditLogger';
 
@@ -18,8 +18,8 @@ export class UsersService {
     const where = search
       ? {
           OR: [
-            { username: { contains: search, mode: 'insensitive' } },
-            { email: { contains: search, mode: 'insensitive' } },
+            { username: { contains: search, mode: 'insensitive' as const } },
+            { email: { contains: search, mode: 'insensitive' as const } },
           ],
         }
       : {};

@@ -1,5 +1,6 @@
 // src/modules/auth/dtos/reset-password.dto.ts
-import { IsEmail, IsNotEmpty, MinLength, Matches, Length, Validate } from 'class-validator';
+import { IsEmail, IsNotEmpty, Matches, Length, Validate } from 'class-validator';
+import { PasswordsMatchValidator } from '../../../shared/passwordsMatch.validator';
 
 export class ResetPasswordDto {
   @IsEmail()
@@ -16,6 +17,6 @@ export class ResetPasswordDto {
   newPassword!: string;
 
   @IsNotEmpty()
-  @Validate((o: ResetPasswordDto) => o.newPassword, { message: 'Las contraseñas no coinciden' })
+  @Validate(PasswordsMatchValidator, ['newPassword', 'newPasswordConfirm'])
   newPasswordConfirm!: string;
 }

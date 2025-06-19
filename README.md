@@ -168,9 +168,57 @@ Puedes descargar el JSON de la especificación desde la interfaz de Swagger UI p
 
 ## 🕵️ Auditoría y trazabilidad
 
-- Todos los eventos críticos quedan registrados en la tabla `audit_logs`, en `audit.log` y en consola
-- Usa el helper `auditLog` para auditar nuevas acciones
-- Consulta la guía `SECURITY_GUIDE.md` para mejores prácticas
+El sistema mantiene un registro detallado de todas las acciones críticas de seguridad:
+
+### Eventos auditados:
+
+- **Autenticación**:
+  - Intentos de login (exitosos y fallidos)
+  - Bloqueo de cuenta por intentos fallidos
+  - Accesos no autorizados
+  - Refresh de tokens
+  - Logout
+
+- **Gestión de contraseñas**:
+  - Solicitudes de reinicio (forgot password)
+  - Cambios de contraseña
+  - Expiración de contraseñas
+  - Validación de OTP
+
+- **Cuenta de usuario**:
+  - Creación de cuenta
+  - Verificación de email
+  - Cambios en estado (activo/inactivo)
+  - Cambios de email
+
+### Detalles registrados:
+
+- IP del cliente
+- ID de usuario (cuando aplica)
+- Timestamp
+- Detalles específicos del evento
+- Intentos restantes (en caso de login)
+- Duración de bloqueos
+- Estado de la acción (éxito/fallo)
+
+Los logs se almacenan en:
+- Base de datos (`audit_logs`)
+- Archivo (`audit.log`)
+- Consola (en desarrollo)
+
+### Consulta de logs:
+
+```sql
+-- Ejemplo: Ver intentos fallidos de login por IP
+SELECT * FROM audit_logs 
+WHERE event = 'login_failed' 
+ORDER BY created_at DESC;
+
+-- Ejemplo: Ver bloqueos de cuenta
+SELECT * FROM audit_logs 
+WHERE event = 'account_locked' 
+ORDER BY created_at DESC;
+```
 
 ---
 

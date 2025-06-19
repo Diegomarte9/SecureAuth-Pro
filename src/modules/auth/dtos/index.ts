@@ -1,4 +1,3 @@
-// src/modules/auth/dtos/index.ts
 export * from './signup.dto';
 export * from './verify-otp.dto';
 export * from './login.dto';

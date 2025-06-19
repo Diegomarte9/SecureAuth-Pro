@@ -1,7 +1,6 @@
 // src/modules/auth/controllers/auth.controller.ts
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from '../services/auth.service';
-import { config } from '../../../config/env';
 
 export class AuthController {
   private authService = new AuthService();
@@ -29,7 +28,7 @@ export class AuthController {
   async login(req: Request, res: Response, next: NextFunction) {
     try {
       const { user, password } = req.body;
-      const tokens = await this.authService.login(user, password);
+      const tokens = await this.authService.login(user, password, req);
       res.status(200).json(tokens);
     } catch (err) {
       next(err);

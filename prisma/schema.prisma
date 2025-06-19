@@ -24,6 +24,8 @@ model User {
   force_password_change Boolean @default(false)
   created_at   DateTime  @default(now())
   updated_at   DateTime  @updatedAt
+  failed_attempts Int    @default(0)
+  locked_until    DateTime?
 
   // Relación con OTPs
   otps         Otp[]
@@ -35,7 +37,7 @@ model User {
 
 model Otp {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String
+  user_id    String   @db.Uuid
   code       String   @db.Char(6)
   type       String
   expires_at DateTime
@@ -50,7 +52,7 @@ model Otp {
 
 model RefreshToken {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String
+  user_id    String   @db.Uuid
   token      String   @unique
   revoked    Boolean  @default(false)
   created_at DateTime @default(now())
@@ -63,7 +65,7 @@ model RefreshToken {
 
 model AuditLog {
   id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String?
+  userId     String?  @db.Uuid
   event      String
   details    Json
   createdAt  DateTime @default(now())

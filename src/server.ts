@@ -1,18 +1,17 @@
 // src/server.ts
+import 'reflect-metadata';
 import { config } from './config/env';
-import { prisma, initializeDatabase } from './config/db';
 import { createApp } from './app';
+import { PrismaClient } from '@prisma/client';
 
 async function start() {
   try {
-    // 1. Conectar Prisma
+    // Conectar Prisma y confirmar conexión
+    const prisma = new PrismaClient();
     await prisma.$connect();
     console.log('🔌 Conexión a la base de datos establecida.');
 
-    // 2. Inicializar esquema
-    await initializeDatabase();
-
-    // 3. Crear y arrancar Express
+    // Crear y arrancar Express
     const app = createApp();
     app.listen(config.port, () => {
       console.log(`🚀 Servidor corriendo en http://localhost:${config.port}`);

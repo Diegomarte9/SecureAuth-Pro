@@ -1,5 +1,5 @@
-// src/modules/auth/dtos/signup.dto.ts
-import { IsEmail, IsNotEmpty, IsString, MinLength, Matches, Validate } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, Matches, Validate } from 'class-validator';
+import { PasswordsMatchValidator } from '../../../shared/passwordsMatch.validator';
 
 export class SignupDto {
   @IsString()
@@ -24,6 +24,6 @@ export class SignupDto {
   password!: string;
 
   @IsString()
-  @Validate((o: SignupDto) => o.password, { message: 'Las contraseñas no coinciden' })
+  @Validate(PasswordsMatchValidator, ['password', 'passwordConfirm'])
   passwordConfirm!: string;
 }

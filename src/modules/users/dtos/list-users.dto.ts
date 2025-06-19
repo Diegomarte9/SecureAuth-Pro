@@ -1,4 +1,3 @@
-// src/modules/users/dtos/list-users.dto.ts
 import { IsInt, IsOptional, IsString, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 

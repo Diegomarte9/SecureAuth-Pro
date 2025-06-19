@@ -7,6 +7,7 @@ import {authRouter} from './modules/auth/routes';
 import {usersRouter} from './modules/users/routes';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
+import 'reflect-metadata';
 
 export function createApp() {
   const app = express();
@@ -98,7 +99,7 @@ export function createApp() {
       const status = err.statusCode ?? 500;
       res.status(status).json({
         error: {
-          message: err.mesage ?? "Internal Server Error",
+          message: err.message ?? "Internal Server Error",
         },
       });
     }

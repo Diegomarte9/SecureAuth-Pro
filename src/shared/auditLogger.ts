@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { prisma } from '../config/db';
+import { PrismaClient } from '@prisma/client';
+export const prisma = new PrismaClient();
 
 const LOG_PATH = path.resolve(process.cwd(), 'audit.log');
 

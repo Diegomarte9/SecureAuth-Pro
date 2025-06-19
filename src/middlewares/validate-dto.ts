@@ -16,7 +16,11 @@ export function validateDto<T>(
       return;
     }
     // replace raw payload with validated+transformed object
-    req[property] = output as any;
+    if (property === 'query' || property === 'params') {
+      Object.assign(req[property], output);
+    } else {
+      req[property] = output as any;
+    }
     next();
   };
 }

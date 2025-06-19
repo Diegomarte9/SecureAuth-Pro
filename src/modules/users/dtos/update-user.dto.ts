@@ -1,5 +1,5 @@
 // src/modules/users/dtos/update-user.dto.ts
-import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, Validate } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -26,4 +26,14 @@ export class UpdateUserDto {
   @IsOptional()
   @IsBoolean()
   is_verified?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(8)
+  password?: string;
+
+  @IsOptional()
+  @IsString()
+  @Validate((o: UpdateUserDto) => o.password === o.passwordConfirm, { message: 'Las contraseñas no coinciden' })
+  passwordConfirm?: string;
 }

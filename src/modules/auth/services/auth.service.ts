@@ -95,20 +95,20 @@ export class AuthService {
   /**
    * Autentica usuario y genera tokens JWT
    */
-  async login(userOrEmail: string, password: string) {
+  async login(userOrEmail: string, password: string, req: any) {
     const user = await prisma.user.findFirst({
       where: {
         OR: [{ username: userOrEmail }, { email: userOrEmail }],
       },
     });
     if (!user || !user.is_active) {
-      auditLog('login_failed', { userOrEmail, reason: 'not_found_or_inactive' }, undefined);
+      auditLog('login_failed', { userOrEmail, reason: 'not_found_or_inactive', ip: req.ip }, undefined);
       throw Object.assign(new Error('Credenciales inválidas'), {
         statusCode: 401,
       });
     }
     if (!user.is_verified) {
-      auditLog('login_failed', { userId: user.id, userOrEmail, reason: 'not_verified' }, user.id);
+      auditLog('login_failed', { userId: user.id, userOrEmail, reason: 'not_verified', ip: req.ip }, user.id);
       throw Object.assign(new Error('Cuenta no verificada. Por favor revisa tu correo y verifica tu cuenta antes de iniciar sesión.'), {
         statusCode: 401,
       });
@@ -119,14 +119,14 @@ export class AuthService {
     const BLOCK_MINUTES = 15;
     const now = new Date();
     if (user.locked_until && user.locked_until > now) {
-      auditLog('login_blocked', { userId: user.id, until: user.locked_until }, user.id);
+      auditLog('login_blocked', { userId: user.id, email: user.email, until: user.locked_until, ip: req.ip }, user.id);
       throw Object.assign(new Error('Cuenta bloqueada temporalmente. Intenta de nuevo más tarde.'), { statusCode: 403 });
     }
 
     // Política de expiración y rotación de contraseñas
     const PASSWORD_MAX_AGE_DAYS = 90;
     if (user.force_password_change || (user.password_changed_at && (new Date().getTime() - new Date(user.password_changed_at).getTime()) > PASSWORD_MAX_AGE_DAYS * 24 * 60 * 60 * 1000)) {
-      auditLog('password_expired', { userId: user.id, email: user.email }, user.id);
+      auditLog('password_expired', { userId: user.id, email: user.email, ip: req.ip }, user.id);
       throw Object.assign(new Error('Debes cambiar tu contraseña antes de continuar.'), { statusCode: 403 });
     }
 
@@ -144,9 +144,22 @@ export class AuthService {
       if (user.failed_attempts + 1 >= MAX_ATTEMPTS) {
         // Notifica por email
         this.emailService.sendOtpEmail(user.email, '', 'reset'); // O crea un método específico para notificación
-        auditLog('account_locked', { userId: user.id, email: user.email }, user.id);
+        auditLog('account_locked', { 
+          userId: user.id, 
+          email: user.email, 
+          attempts: user.failed_attempts + 1,
+          lockDuration: `${BLOCK_MINUTES} minutes`,
+          ip: req.ip 
+        }, user.id);
       }
-      auditLog('login_failed', { userId: user.id, userOrEmail, reason: 'invalid_password' }, user.id);
+      auditLog('login_failed', { 
+        userId: user.id, 
+        userOrEmail, 
+        reason: 'invalid_password',
+        attempts: user.failed_attempts + 1,
+        remainingAttempts: MAX_ATTEMPTS - (user.failed_attempts + 1),
+        ip: req.ip 
+      }, user.id);
       throw Object.assign(new Error('Credenciales inválidas'), {
         statusCode: 401,
       });
@@ -154,7 +167,7 @@ export class AuthService {
 
     // Resetear intentos fallidos al login exitoso
     await prisma.user.update({ where: { id: user.id }, data: { failed_attempts: 0, locked_until: null } });
-    auditLog('login_success', { userId: user.id, userOrEmail }, user.id);
+    auditLog('login_success', { userId: user.id, userOrEmail, ip: req.ip }, user.id);
 
     const payload = { sub: user.id };
     const accessToken = jwt.sign(payload, config.jwtAccessSecret, {
@@ -180,6 +193,8 @@ export class AuthService {
     if (!user) {
       // Simula el mismo tiempo de procesamiento para evitar ataques de enumeración
       await new Promise((resolve) => setTimeout(resolve, 500));
+      // Auditar intento aunque el usuario no exista (sin userId)
+      auditLog('forgot_password_requested', { email, exists: false }, undefined);
       return;
     }
 
@@ -195,6 +210,8 @@ export class AuthService {
     });
 
     await this.emailService.sendOtpEmail(user.email, code, 'reset');
+    // Auditar solicitud exitosa
+    auditLog('forgot_password_requested', { email, exists: true }, user.id);
   }
 
   /**
