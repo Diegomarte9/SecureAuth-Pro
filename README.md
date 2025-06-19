@@ -47,12 +47,12 @@
 
 ---
 
-## ⚙️ Despliegue y uso
+## ⚙️ Primeros pasos
 
 ### 1. Clona el repositorio y configura el entorno
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/Diegomarte9/SecureAuth-Pro.git
 cd SecureAuth-Pro
 cp .env.example .env # y edita tus variables
 ```
@@ -77,6 +77,40 @@ npm test
 
 ---
 
+## 🚀 Despliegue: Desarrollo vs Producción
+
+### 🔧 Desarrollo (hot reload, nodemon)
+
+- Usa el servicio `app-dev` para desarrollo local con recarga automática:
+
+```bash
+docker-compose up app-dev
+```
+- Cambios en el código se reflejan al instante (hot reload).
+- Acceso a Swagger: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+- Usa una base de datos y pgAdmin locales (también levantados por Docker Compose).
+
+### 🏭 Producción (código compilado, seguro)
+
+- Usa el servicio `app` para producción:
+
+```bash
+docker-compose up --build app
+```
+- Solo incluye dependencias y código necesario para producción.
+- Asegúrate de tener un archivo `.env` con valores reales y seguros (no subas este archivo a GitHub).
+- La ruta `/api-docs` solo estará disponible si defines `SWAGGER_ENABLE=true` en tu `.env`.
+- Usa un proxy inverso (Nginx, Caddy, etc.) para HTTPS y mayor seguridad.
+
+### ⚠️ Buenas prácticas y advertencias
+
+- **Nunca uses secretos de desarrollo en producción.**
+- Haz backups regulares de la base de datos.
+- Monitorea logs y recursos del contenedor.
+- Actualiza dependencias y ejecuta los tests antes de desplegar.
+
+---
+
 ## 🛠️ Variables de entorno principales
 
 - `DATABASE_URL` — URL de conexión a PostgreSQL
@@ -87,6 +121,40 @@ npm test
 - `CORS_ORIGIN` — Origen permitido para CORS
 
 Ver `.env.example` para la lista completa.
+
+---
+
+## 📖 Documentación Interactiva de la API (Swagger)
+
+La API cuenta con documentación interactiva y auto-generada usando **Swagger UI**. Puedes explorar todos los endpoints, probar peticiones y ver ejemplos de request/response fácilmente.
+
+- Accede a la documentación en: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
+- Si usas otro puerto, reemplaza `3000` por el que corresponda.
+- En producción, la ruta solo estará disponible si defines la variable de entorno `SWAGGER_ENABLE=true`.
+
+### Ejemplo de autenticación (login)
+
+```json
+POST /auth/login
+{
+  "email": "user@example.com",
+  "password": "Password123!"
+}
+```
+
+La respuesta incluirá un `accessToken` (JWT) y un `refreshToken`.
+
+### Usar endpoints protegidos
+
+Agrega el token JWT en el header:
+
+```
+Authorization: Bearer <accessToken>
+```
+
+### Especificación OpenAPI
+
+Puedes descargar el JSON de la especificación desde la interfaz de Swagger UI para generar clientes en otros lenguajes.
 
 ---
 

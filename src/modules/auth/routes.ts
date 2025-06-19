@@ -16,6 +16,24 @@ import { loginRateLimiter } from '../../middlewares/rateLimiter';
 export const authRouter = Router();
 const auth = new AuthController();
 
+/**
+ * @swagger
+ * /auth/signup:
+ *   post:
+ *     summary: Registro de usuario y envío de OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SignupDto'
+ *     responses:
+ *       201:
+ *         description: Usuario registrado, OTP enviado
+ *       400:
+ *         description: Error de validación
+ */
 // Registro de usuario + envío de OTP
 authRouter.post("/signup", validateDto(SignupDto), asyncHandler((req, res, next) =>
   auth.signup(req, res, next)
@@ -26,6 +44,24 @@ authRouter.post("/verify-otp", validateDto(VerifyOtpDto), asyncHandler((req, res
   auth.verifyOtp(req, res, next)
 ));
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: Login de usuario (solo usuarios verificados)
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginDto'
+ *     responses:
+ *       200:
+ *         description: Login exitoso, retorna access y refresh token
+ *       401:
+ *         description: Credenciales inválidas o usuario no verificado
+ */
 // Login y generación de JWT
 authRouter.post(
   "/login",
@@ -53,12 +89,46 @@ authRouter.post(
   asyncHandler((req, res, next) => auth.resetPassword(req, res, next))
 );
 
+/**
+ * @swagger
+ * /auth/refresh-token:
+ *   post:
+ *     summary: Refresca el access token usando el refresh token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken:
+ *                 type: string
+ *                 example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+ *     responses:
+ *       200:
+ *         description: Nuevo access token
+ *       401:
+ *         description: Refresh token inválido o expirado
+ */
 // Endpoint para refrescar el access token
 authRouter.post(
   '/refresh-token',
   asyncHandler((req, res, next) => auth.refreshToken(req, res, next))
 );
 
+/**
+ * @swagger
+ * /auth/logout:
+ *   post:
+ *     summary: Cierra sesión y revoca el refresh token
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Logout exitoso
+ */
 authRouter.post(
   '/logout',
   asyncHandler((req, res, next) => auth.logout(req, res, next))

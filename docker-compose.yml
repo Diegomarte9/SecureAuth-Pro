@@ -45,6 +45,24 @@ services:
       sh -c "npx prisma migrate deploy &&
              node dist/server.js"
 
+  app-dev:
+    build:
+      context: .
+      target: dev
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/secureauth?schema=public
+      - PORT=3000
+    volumes:
+      - ./:/app
+    command: sh -c "npx prisma migrate deploy && npm run dev"
+
 volumes:
   db_data:
   pgadmin_data:

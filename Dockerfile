@@ -24,3 +24,12 @@ COPY --from=builder /app/dist ./dist
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
+
+# Etapa de desarrollo
+FROM node:20-alpine AS dev
+WORKDIR /app
+COPY package.json package-lock.json ./
+RUN npm install
+COPY . .
+EXPOSE 3000
+CMD ["npm", "run", "dev"]
