@@ -1,29 +1,21 @@
-// src/modules/users/routes.ts
 import { Router } from 'express';
 import { UsersController } from './controllers/user.controller';
-import { authMiddleware } from '../../middlewares/auth.middleware';
 import { validateDto } from '../../middlewares/validate-dto';
 import { CreateUserDto, UpdateUserDto, ListUsersDto } from './dtos';
-import { asyncHandler } from '../../shared/asyncHandler';
+import { authMiddleware } from '../../middlewares/auth.middleware';
+import { checkRole } from '../../middlewares/check-role';
 
 export const usersRouter = Router();
 const users = new UsersController();
-
-// Protegemos todas las rutas /users para administradores o el propio usuario
-usersRouter.use(authMiddleware); 
 
 /**
  * @swagger
  * /users:
  *   get:
- *     summary: Lista usuarios (requiere autenticación)
+ *     summary: Lista usuarios (requiere autenticación y rol ADMIN)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     description: >-
- *       Requiere enviar el access token (JWT) en el header:
- *       
- *         Authorization: Bearer <accessToken>
  *     parameters:
  *       - in: query
  *         name: page
@@ -40,152 +32,173 @@ usersRouter.use(authMiddleware);
  *         description: Lista de usuarios
  *       401:
  *         description: No autorizado
+ *       403:
+ *         description: Permisos insuficientes
  */
-// Listar usuarios con paginación/filtros
 usersRouter.get(
   '/',
+  authMiddleware,
+  checkRole(['ADMIN']),
   validateDto(ListUsersDto, 'query'),
-  asyncHandler((req, res, next) => users.findAll(req, res, next))
+  async (req, res, next): Promise<void> => {
+    try {
+      await users.findAll(req, res, next);
+    } catch (error) {
+      next(error);
+    }
+  }
 );
 
 /**
  * @swagger
  * /users/{id}:
  *   get:
- *     summary: Obtiene un usuario por ID
+ *     summary: Obtiene un usuario por ID (requiere autenticación)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     description: >-
+ *     description: >
  *       Requiere enviar el access token (JWT) en el header:
  *       
  *         Authorization: Bearer <accessToken>
+ *       
+ *       Un usuario normal solo puede ver su propia información.
+ *       Usuarios con rol ADMIN pueden ver información de cualquier usuario.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
  *     responses:
  *       200:
  *         description: Usuario encontrado
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Permisos insuficientes
  *       404:
  *         description: Usuario no encontrado
  */
-// Obtener un usuario por ID
-usersRouter.get('/:id', asyncHandler((req, res, next) => users.findOne(req, res, next)));
+usersRouter.get('/:id', authMiddleware, async (req, res, next): Promise<void> => {
+  try {
+    await users.findOne(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * @swagger
  * /users:
  *   post:
- *     summary: Crea un usuario (requiere autenticación)
+ *     summary: Crea un nuevo usuario
  *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     description: >-
- *       Requiere enviar el access token (JWT) en el header:
- *       
- *         Authorization: Bearer <accessToken>
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/CreateUserDto'
- *           example:
- *             email: user@example.com
- *             password: Password123!
  *     responses:
  *       201:
- *         description: Usuario creado
+ *         description: Usuario creado exitosamente
  *       400:
  *         description: Error de validación
  */
-// Crear usuario (reutilizable de signup si es necesario)
-usersRouter.post(
-  '/',
-  validateDto(CreateUserDto),
-  asyncHandler((req, res, next) => users.create(req, res, next))
-);
+usersRouter.post('/', validateDto(CreateUserDto), async (req, res, next): Promise<void> => {
+  try {
+    await users.create(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * @swagger
  * /users/{id}:
  *   put:
- *     summary: Actualiza un usuario
+ *     summary: Actualiza un usuario (requiere autenticación)
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     description: >-
+ *     description: >
  *       Requiere enviar el access token (JWT) en el header:
  *       
  *         Authorization: Bearer <accessToken>
+ *       
+ *       Los usuarios normales solo pueden actualizar su propia información.
+ *       Los usuarios con rol ADMIN pueden actualizar cualquier usuario.
+ *       Solo se pueden editar los campos básicos: username, email, first_name, last_name, password.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/UpdateUserDto'
- *           example:
- *             username: johndoe
- *             email: johndoe@example.com
- *             first_name: John
- *             last_name: Doe
- *             is_active: true
- *             is_verified: true
- *             password: Password123!
- *             passwordConfirm: Password123!
  *     responses:
  *       200:
  *         description: Usuario actualizado
  *       400:
  *         description: Error de validación
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Permisos insuficientes
  *       404:
  *         description: Usuario no encontrado
  */
-// Actualizar usuario
-usersRouter.put(
-  '/:id',
-  validateDto(UpdateUserDto),
-  asyncHandler((req, res, next) => users.update(req, res, next))
-);
+usersRouter.put('/:id', authMiddleware, validateDto(UpdateUserDto), async (req, res, next): Promise<void> => {
+  try {
+    await users.update(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * @swagger
  * /users/{id}:
  *   delete:
- *     summary: Elimina (soft delete) un usuario
+ *     summary: Elimina un usuario (soft delete) - requiere autenticación y rol ADMIN
  *     tags: [Users]
  *     security:
  *       - bearerAuth: []
- *     description: >-
+ *     description: >
  *       Requiere enviar el access token (JWT) en el header:
  *       
  *         Authorization: Bearer <accessToken>
+ *       
+ *       Solo usuarios con rol ADMIN pueden eliminar usuarios.
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
- *         description: ID del usuario
  *     responses:
- *       200:
+ *       204:
  *         description: Usuario eliminado
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Permisos insuficientes
  *       404:
  *         description: Usuario no encontrado
  */
-// "Eliminar" usuario (soft delete)
-usersRouter.delete('/:id', asyncHandler((req, res, next) => users.remove(req, res, next)));
+usersRouter.delete('/:id', authMiddleware, checkRole(['ADMIN']), async (req, res, next): Promise<void> => {
+  try {
+    await users.remove(req, res, next);
+  } catch (error) {
+    next(error);
+  }
+});
 
 /**
  * @swagger
@@ -221,12 +234,6 @@ usersRouter.delete('/:id', asyncHandler((req, res, next) => users.remove(req, re
  *         last_name:
  *           type: string
  *           example: Doe
- *         is_active:
- *           type: boolean
- *           example: true
- *         is_verified:
- *           type: boolean
- *           example: true
  *         password:
  *           type: string
  *           format: password
@@ -236,3 +243,5 @@ usersRouter.delete('/:id', asyncHandler((req, res, next) => users.remove(req, re
  *           format: password
  *           example: "Password123!"
  */
+
+export default usersRouter;

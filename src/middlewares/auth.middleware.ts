@@ -29,7 +29,14 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
       }
 
       // Inyectar datos en la petición
-      (req as any).user = { id: user.id, username: user.username, email: user.email, is_admin: user.is_verified /* example */ };
+      (req as any).user = { 
+        sub: user.id, 
+        id: user.id, 
+        username: user.username, 
+        email: user.email, 
+        role: user.role,
+        is_active: user.is_active 
+      };
       next();
     } catch (err: any) {
       auditLog('unauthorized_access', { reason: 'invalid_token', ip: req.ip, path: req.path }, undefined);

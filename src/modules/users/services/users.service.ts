@@ -7,6 +7,52 @@ const prisma = new PrismaClient();
 
 export class UsersService {
   /**
+   * Verificar si un usuario puede editar/eliminar a otro usuario
+   */
+  async canModifyUser(currentUserId: string, targetUserId: string): Promise<boolean> {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { role: true }
+    });
+
+    // Si no existe el usuario actual, no puede modificar
+    if (!currentUser) {
+      return false;
+    }
+
+    // Los admins pueden modificar cualquier usuario
+    if (currentUser.role === 'ADMIN') {
+      return true;
+    }
+
+    // Los usuarios normales solo pueden modificar su propia cuenta
+    return currentUserId === targetUserId;
+  }
+
+  /**
+   * Verificar si un usuario puede ver a otro usuario
+   */
+  async canViewUser(currentUserId: string, targetUserId: string): Promise<boolean> {
+    const currentUser = await prisma.user.findUnique({
+      where: { id: currentUserId },
+      select: { role: true }
+    });
+
+    // Si no existe el usuario actual, no puede ver
+    if (!currentUser) {
+      return false;
+    }
+
+    // Los admins pueden ver cualquier usuario
+    if (currentUser.role === 'ADMIN') {
+      return true;
+    }
+
+    // Los usuarios normales solo pueden ver su propia cuenta
+    return currentUserId === targetUserId;
+  }
+
+  /**
    * Listar usuarios con paginación y búsqueda
    */
   async findAll(options: {
@@ -80,36 +126,54 @@ export class UsersService {
       email: string;
       first_name: string;
       last_name: string;
-      is_active: boolean;
-      is_verified: boolean;
-      is_admin?: boolean;
-    }>
+    }>,
+    currentUserId?: string
   ) {
+    // Verificar permisos si se proporciona currentUserId
+    if (currentUserId) {
+      const canModify = await this.canModifyUser(currentUserId, id);
+      if (!canModify) {
+        throw Object.assign(new Error('Permisos insuficientes para modificar este usuario'), {
+          statusCode: 403,
+        });
+      }
+    }
+
     const prev = await prisma.user.findUnique({ where: { id } });
+    if (!prev) {
+      throw Object.assign(new Error('Usuario no encontrado'), {
+        statusCode: 404,
+      });
+    }
+
     const updated = await prisma.user.update({ where: { id }, data });
+    
+    // Audit logging
     if (data.email && data.email !== prev?.email) {
-      auditLog('email_changed', { userId: id, oldEmail: prev?.email, newEmail: data.email }, id);
+      auditLog('email_changed', { userId: id, oldEmail: prev?.email, newEmail: data.email }, currentUserId);
     }
-    if (typeof data.is_active === 'boolean' && data.is_active !== prev?.is_active) {
-      auditLog('user_active_status_changed', { userId: id, from: prev?.is_active, to: data.is_active }, id);
-    }
-    if (typeof data.is_verified === 'boolean' && data.is_verified !== prev?.is_verified) {
-      auditLog('user_verified_status_changed', { userId: id, from: prev?.is_verified, to: data.is_verified }, id);
-    }
-    if (typeof data.is_admin === 'boolean' && data.is_admin !== (prev as any)?.is_admin) {
-      auditLog('user_admin_status_changed', { userId: id, from: (prev as any)?.is_admin, to: data.is_admin }, id);
-    }
+    
     return updated;
   }
 
   /**
    * Soft delete: desactiva al usuario sin eliminarlo
    */
-  async softDelete(id: string) {
+  async softDelete(id: string, currentUserId?: string) {
+    // Verificar permisos si se proporciona currentUserId
+    if (currentUserId) {
+      const canModify = await this.canModifyUser(currentUserId, id);
+      if (!canModify) {
+        throw Object.assign(new Error('Permisos insuficientes para eliminar este usuario'), {
+          statusCode: 403,
+        });
+      }
+    }
+
     await prisma.user.update({
       where: { id },
       data: { is_active: false },
     });
-    auditLog('user_soft_deleted', { userId: id }, id);
+    auditLog('user_soft_deleted', { userId: id }, currentUserId);
   }
 }

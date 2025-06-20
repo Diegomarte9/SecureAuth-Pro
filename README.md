@@ -9,6 +9,8 @@
 - Registro, login y verificación de usuarios vía OTP (correo electrónico)
 - Recuperación y reseteo seguro de contraseñas
 - Autenticación y autorización basada en JWT (access y refresh tokens)
+- **Sistema de roles (USER/ADMIN) con control de acceso granular**
+- **Gestión completa de usuarios con permisos basados en roles**
 - Almacenamiento y revocación de refresh tokens
 - Política de contraseñas fuertes y rotación/expiración
 - Bloqueo temporal tras intentos fallidos de login
@@ -28,6 +30,7 @@
 - **Docker**: Despliegue y desarrollo reproducible
 - **Auditoría**: Logs en base de datos, archivo y consola
 - **Notificaciones**: Email (fácil de extender a SMS, push, etc.)
+- **Control de acceso**: Middleware de roles y validaciones de permisos
 
 ---
 
@@ -44,6 +47,86 @@
 - Política de expiración y rotación de contraseñas
 - Variables sensibles en `.env`
 - CORS configurable
+- **Control de acceso basado en roles (RBAC)**
+- **Validación de permisos a nivel de servicio**
+
+---
+
+## 👥 Sistema de Roles y Permisos
+
+### Roles disponibles:
+- **USER**: Usuario normal con acceso limitado
+- **ADMIN**: Administrador con acceso completo
+
+### Permisos por rol:
+
+#### 🔐 Usuarios con rol USER:
+- ✅ Ver su propia información
+- ✅ Editar su propia información (campos básicos)
+- ❌ Ver información de otros usuarios
+- ❌ Editar información de otros usuarios
+- ❌ Eliminar usuarios
+- ❌ Listar todos los usuarios
+
+#### 🔑 Usuarios con rol ADMIN:
+- ✅ Ver información de cualquier usuario
+- ✅ Editar información de cualquier usuario (campos básicos)
+- ✅ Eliminar usuarios (soft delete)
+- ✅ Listar todos los usuarios
+- ❌ Cambiar roles (solo vía base de datos)
+
+### Campos editables:
+- `username`
+- `email`
+- `first_name`
+- `last_name`
+- `password`
+
+### Campos NO editables (solo vía base de datos):
+- `role`
+- `is_active`
+- `is_verified`
+
+---
+
+## 📋 Endpoints de Usuarios
+
+### Autenticación requerida en todos los endpoints excepto POST /users
+
+| Método | Endpoint | Descripción | Roles permitidos |
+|--------|----------|-------------|------------------|
+| GET | `/users` | Listar usuarios | ADMIN |
+| GET | `/users/:id` | Ver usuario específico | Propio usuario o ADMIN |
+| POST | `/users` | Crear usuario (signup) | Público |
+| PUT | `/users/:id` | Actualizar usuario | Propio usuario o ADMIN |
+| DELETE | `/users/:id` | Eliminar usuario (soft delete) | ADMIN |
+
+### Ejemplos de uso:
+
+```bash
+# Login para obtener token
+POST /auth/login
+{
+  "email": "admin@example.com",
+  "password": "Password123!"
+}
+
+# Listar usuarios (solo admin)
+GET /users
+Authorization: Bearer <admin_token>
+
+# Ver usuario específico
+GET /users/123
+Authorization: Bearer <user_token>
+
+# Actualizar información propia
+PUT /users/123
+Authorization: Bearer <user_token>
+{
+  "first_name": "Nuevo Nombre",
+  "email": "nuevo@email.com"
+}
+```
 
 ---
 
@@ -69,7 +152,17 @@ docker-compose up --build
 npx prisma migrate dev --name init
 ```
 
-### 4. Corre los tests automáticos
+### 4. Crea un usuario admin
+
+```bash
+# Conectarse a la base de datos
+docker-compose exec db psql -U postgres -d secureauth
+
+# Actualizar rol a ADMIN
+UPDATE users SET role = 'ADMIN' WHERE email = 'tu_email@ejemplo.com';
+```
+
+### 5. Corre los tests automáticos
 
 ```bash
 npm test
@@ -191,6 +284,12 @@ El sistema mantiene un registro detallado de todas las acciones críticas de seg
   - Cambios en estado (activo/inactivo)
   - Cambios de email
 
+- **Gestión de usuarios**:
+  - Visualización de usuarios
+  - Actualización de información
+  - Eliminación de usuarios (soft delete)
+  - Intentos de acceso no autorizado
+
 ### Detalles registrados:
 
 - IP del cliente
@@ -198,54 +297,32 @@ El sistema mantiene un registro detallado de todas las acciones críticas de seg
 - Timestamp
 - Detalles específicos del evento
 - Intentos restantes (en caso de login)
-- Duración de bloqueos
-- Estado de la acción (éxito/fallo)
+- Roles requeridos vs roles del usuario
+- Acciones realizadas en gestión de usuarios
 
-Los logs se almacenan en:
-- Base de datos (`audit_logs`)
-- Archivo (`audit.log`)
-- Consola (en desarrollo)
+---
 
-### Consulta de logs:
+## 🔧 Gestión de Usuarios
 
+### Soft Delete
+Los usuarios eliminados no se borran físicamente de la base de datos, sino que se marcan como inactivos (`is_active = false`). Esto permite:
+- Mantener historial de auditoría
+- Posibilidad de reactivación
+- Preservar integridad referencial
+
+### Cambio de roles
+Los roles solo se pueden cambiar directamente en la base de datos:
 ```sql
--- Ejemplo: Ver intentos fallidos de login por IP
-SELECT * FROM audit_logs 
-WHERE event = 'login_failed' 
-ORDER BY created_at DESC;
+UPDATE users SET role = 'ADMIN' WHERE email = 'usuario@ejemplo.com';
+```
 
--- Ejemplo: Ver bloqueos de cuenta
-SELECT * FROM audit_logs 
-WHERE event = 'account_locked' 
-ORDER BY created_at DESC;
+### Reactivar usuario eliminado
+```sql
+UPDATE users SET is_active = true WHERE id = 'user_id';
 ```
 
 ---
 
-## 📬 Notificaciones
+## 📝 Licencia
 
-- El helper `notifyUser` permite enviar emails ante eventos críticos (bloqueo, cambio de contraseña, etc.)
-- Fácil de extender a otros canales (SMS, push)
-
----
-
-## 👥 Contribución
-
-1. Haz fork del repo y crea una rama
-2. Sigue las guías de seguridad y testing
-3. Haz tu PR con una descripción clara
-
----
-
-## 📚 Recursos útiles
-
-- [Prisma Docs](https://www.prisma.io/docs/)
-- [Express Docs](https://expressjs.com/)
-- [Node.js Docs](https://nodejs.org/)
-- [Docker Docs](https://docs.docker.com/)
-
----
-
-## 🛡️ Contacto y soporte
-
-Para dudas, soporte o reportar vulnerabilidades, contacta al equipo de seguridad del proyecto.
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.

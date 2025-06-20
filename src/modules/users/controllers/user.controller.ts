@@ -17,6 +17,17 @@ export class UsersController {
   async findOne(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
+      const currentUserId = (req as any).user?.sub;
+
+      // Verificar permisos para ver el usuario
+      if (currentUserId) {
+        const canView = await this.usersService.canViewUser(currentUserId, id);
+        if (!canView) {
+          res.status(403).json({ message: 'Permisos insuficientes para ver este usuario' });
+          return;
+        }
+      }
+
       const user = await this.usersService.findOne(id);
       res.status(200).json(user);
     } catch (err) {
@@ -38,7 +49,9 @@ export class UsersController {
     try {
       const { id } = req.params;
       const dto = req.body;
-      const updated = await this.usersService.update(id, dto);
+      const currentUserId = (req as any).user?.sub;
+
+      const updated = await this.usersService.update(id, dto, currentUserId);
       res.status(200).json(updated);
     } catch (err) {
       next(err);
@@ -48,7 +61,9 @@ export class UsersController {
   async remove(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const { id } = req.params;
-      await this.usersService.softDelete(id);
+      const currentUserId = (req as any).user?.sub;
+
+      await this.usersService.softDelete(id, currentUserId);
       res.status(204).send();
     } catch (err) {
       next(err);
