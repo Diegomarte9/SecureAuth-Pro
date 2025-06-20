@@ -89,6 +89,8 @@ export class AuthService {
         data: { is_verified: true },
       });
       auditLog('account_verified', { userId: otp.user_id, email }, otp.user_id);
+      // Notificar por correo que la cuenta fue verificada
+      await this.emailService.sendAccountVerifiedEmail(email);
     }
   }
 
@@ -141,9 +143,13 @@ export class AuthService {
             : user.locked_until,
         },
       });
+      // Notificar advertencia si está cerca de bloquearse
+      if (user.failed_attempts + 1 === MAX_ATTEMPTS - 1) {
+        await this.emailService.sendLoginAttemptsWarning(user.email, user.failed_attempts + 1);
+      }
       if (user.failed_attempts + 1 >= MAX_ATTEMPTS) {
-        // Notifica por email
-        this.emailService.sendOtpEmail(user.email, '', 'reset'); // O crea un método específico para notificación
+        // Notifica por email bloqueo
+        await this.emailService.sendAccountLockedEmail(user.email, BLOCK_MINUTES);
         auditLog('account_locked', { 
           userId: user.id, 
           email: user.email, 
@@ -253,6 +259,10 @@ export class AuthService {
 
     const user = await prisma.user.findUnique({ where: { email } });
     auditLog('password_reset', { email }, user?.id);
+    // Notificar por correo que el password fue reseteado
+    if (user) {
+      await this.emailService.sendPasswordResetSuccess(user.email);
+    }
   }
 
   async changePassword(userId: string, oldPassword: string, newPassword: string) {
@@ -263,6 +273,8 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(newPassword, 12);
     await prisma.user.update({ where: { id: userId }, data: { password_hash: passwordHash, password_changed_at: new Date(), force_password_change: false } });
     auditLog('password_changed', { userId, email: user.email }, userId);
+    // Notificar por correo que el password fue cambiado
+    await this.emailService.sendPasswordChanged(user.email);
   }
 
   async refreshToken(token: string, req: any) {
