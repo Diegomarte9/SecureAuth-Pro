@@ -87,4 +87,49 @@ export class EmailService {
     const text = 'Tu contraseña ha sido cambiada correctamente. Si no fuiste tú, contacta soporte de inmediato.';
     await this.sendGenericEmail(email, subject, text);
   }
+
+  /**
+   * Notifica al admin sobre una nueva solicitud de registro
+   */
+  async sendAdminNewSignupRequest(user: any) {
+    // Enviar correo real al admin con los datos del usuario
+    await this.transporter.sendMail({
+      from: config.smtp.from,
+      to: config.adminEmail || 'admin@tudominio.com', // Usa variable de entorno o hardcodea
+      subject: 'Nueva solicitud de registro pendiente',
+      text: `Hay una nueva solicitud de registro:
+
+Email: ${user.email}
+Nombre: ${user.first_name} ${user.last_name}
+Username: ${user.username}
+
+Por favor, revisa la plataforma para aprobar o rechazar la solicitud.`
+    });
+  }
+
+  /**
+   * Notifica al usuario que su solicitud fue aprobada
+   */
+  async sendUserApprovedEmail(email: string) {
+    // TODO: Personaliza el asunto y el cuerpo del correo
+    await this.transporter.sendMail({
+      from: config.smtp.from,
+      to: email,
+      subject: '¡Tu cuenta ha sido aprobada! 🎉',
+      text: 'Tu cuenta ha sido aprobada por un administrador. Ya puedes iniciar sesión en la plataforma.'
+    });
+  }
+
+  /**
+   * Notifica al usuario que su solicitud fue rechazada
+   */
+  async sendUserRejectedEmail(email: string) {
+    // TODO: Personaliza el asunto y el cuerpo del correo
+    await this.transporter.sendMail({
+      from: config.smtp.from,
+      to: email,
+      subject: 'Solicitud de registro rechazada',
+      text: 'Lamentablemente, tu solicitud de registro fue rechazada por un administrador.'
+    });
+  }
 }

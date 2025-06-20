@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: SecureAuth-Pro Users API
-  version: 1.0.0
+  version: 2.0.0
   description: Endpoints de gestión de usuarios.
   contact:
     name: SecureAuth-Pro
@@ -130,6 +130,58 @@ paths:
       responses:
         204:
           description: Usuario eliminado
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+        404:
+          description: Usuario no encontrado
+
+  /users/{id}/approve:
+    post:
+      summary: Aprueba la solicitud de registro de un usuario (solo admin)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      description: >
+        Cambia el estado del usuario a "active" y le envía un correo de notificación. Solo usuarios con rol ADMIN pueden aprobar solicitudes.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Usuario aprobado
+        400:
+          description: Solo se pueden aprobar usuarios pendientes
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+        404:
+          description: Usuario no encontrado
+
+  /users/{id}/reject:
+    post:
+      summary: Rechaza la solicitud de registro de un usuario (solo admin)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      description: >
+        Cambia el estado del usuario a "rejected" y le envía un correo de notificación. Solo usuarios con rol ADMIN pueden rechazar solicitudes.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Usuario rechazado
+        400:
+          description: Solo se pueden rechazar usuarios pendientes
         401:
           description: No autorizado
         403:

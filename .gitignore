@@ -16,6 +16,7 @@ yarn-error.log*
 !.env.example
 .env.*
 !.env.example
+prisma/seed.ts
 
 # Prisma
 prisma/dev.db

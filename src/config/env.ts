@@ -30,4 +30,6 @@ export const config = {
 
     rateLimitWindowMs: Number(getEnvVar('RATE_LIMIT_WINDOW_MS', String(15 * 60 * 1000))), // 1 minuto
     rateLimitMaxRequests: Number(getEnvVar('RATE_LIMIT_MAX_REQUESTS', '100')), // 100 solicitudes por ventana
+
+    adminEmail: getEnvVar('ADMIN_EMAIL', 'admin@tudominio.com'),
 };

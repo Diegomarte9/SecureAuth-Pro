@@ -22,7 +22,7 @@ export class AuthService {
     last_name: string;
     password: string;
   }) {
-    // 1. Crear usuario con hash de contraseña
+    // 1. Crear usuario con hash de contraseña y status 'pending'
     const passwordHash = await bcrypt.hash(data.password, 12);
     const user = await prisma.user.create({
       data: {
@@ -31,24 +31,13 @@ export class AuthService {
         first_name: data.first_name,
         last_name: data.last_name,
         password_hash: passwordHash,
+        status: 'pending',
       },
     });
     auditLog('user_created', { userId: user.id, email: user.email });
 
-    // 2. Generar OTP de verificación
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    const expiresAt = new Date(Date.now() + config.otpExpiresMinutes * 60000);
-    await prisma.otp.create({
-      data: {
-        user_id: user.id,
-        code,
-        type: 'verification',
-        expires_at: expiresAt,
-      },
-    });
-
-    // 3. Enviar OTP por correo
-    await this.emailService.sendOtpEmail(user.email, code, 'verification');
+    // 2. Notificar al admin por correo sobre la nueva solicitud
+    await this.emailService.sendAdminNewSignupRequest(user);
   }
 
   /**
@@ -105,9 +94,21 @@ export class AuthService {
     });
     if (!user || !user.is_active) {
       auditLog('login_failed', { userOrEmail, reason: 'not_found_or_inactive', ip: req.ip }, undefined);
-      throw Object.assign(new Error('Credenciales inválidas'), {
-        statusCode: 401,
-      });
+      throw Object.assign(new Error('Credenciales inválidas'), { statusCode: 401 });
+    }
+    // Solo permite login a usuarios activos
+    if (user.status !== 'active') {
+      let reason = 'pending';
+      if (user.status === 'pending') reason = 'pending_approval';
+      if (user.status === 'rejected') reason = 'rejected';
+      auditLog('login_failed', { userId: user.id, userOrEmail, reason, ip: req.ip }, user.id);
+      if (user.status === 'pending') {
+        throw Object.assign(new Error('Tu cuenta está pendiente de aprobación por un administrador.'), { statusCode: 403 });
+      } else if (user.status === 'rejected') {
+        throw Object.assign(new Error('Tu solicitud de registro fue rechazada.'), { statusCode: 403 });
+      } else {
+        throw Object.assign(new Error('No puedes iniciar sesión en este momento.'), { statusCode: 403 });
+      }
     }
     if (!user.is_verified) {
       auditLog('login_failed', { userId: user.id, userOrEmail, reason: 'not_verified', ip: req.ip }, user.id);

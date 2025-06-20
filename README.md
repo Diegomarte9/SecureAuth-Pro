@@ -1,57 +1,76 @@
-# SecureAuth-Pro
+# 🚀 SecureAuth-Pro v2
 
-## Índice
-1. [Descripción](#descripción)
-2. [Características principales](#características-principales)
-3. [Arquitectura](#arquitectura)
-4. [Primeros pasos](#primeros-pasos)
-5. [🚀 Despliegue rápido en servidor usando Docker Hub](#despliegue-rápido-en-servidor-usando-docker-hub)
-6. [Comandos Docker Simplificados](#comandos-docker-simplificados)
-7. [🐳 Docker Compose para Producción y Desarrollo](#docker-compose-para-producción-y-desarrollo)
-8. [Flujos de trabajo recomendados](#flujos-de-trabajo-recomendados)
-9. [Sistema de Roles y Permisos](#sistema-de-roles-y-permisos)
-10. [Endpoints principales](#endpoints-principales)
-11. [Variables de entorno](#variables-de-entorno)
-12. [Auditoría y seguridad](#auditoría-y-seguridad)
-13. [Gestión de usuarios](#gestión-de-usuarios)
-14. [Documentación Swagger](#documentación-swagger)
-15. [Testing](#testing)
-16. [Notificaciones por correo](#notificaciones-por-correo)
-17. [Zona horaria y auditoría](#zona-horaria-y-auditoría)
-18. [Backups de la base de datos](#backups-de-la-base-de-datos)
-19. [Licencia](#licencia)
+## ✨ ¿Qué es diferente en v2?
+
+- El registro de usuario requiere aprobación de un administrador.
+- No se usa OTP para activar la cuenta tras el registro.
+- El usuario queda en estado "pending" tras registrarse y no puede iniciar sesión hasta ser aprobado.
+- El administrador recibe notificaciones de nuevas solicitudes y puede aprobar o rechazar usuarios desde la API (listo para dashboard).
+- El usuario recibe un correo cuando es aprobado o rechazado.
+- Endpoints nuevos: `/users/:id/approve` y `/users/:id/reject` (solo admin).
+
+> **Nota:** Esta versión es ideal para sistemas donde el acceso debe ser controlado manualmente por un administrador (ej: plataformas privadas, empresas, etc).
 
 ---
 
-## Descripción
+## 🗂️ Índice
+1. [📝 Descripción](#-descripción)
+2. [📦 Despliegue rápido sin clonar el repositorio](#-despliegue-rápido-sin-clonar-el-repositorio)
+3. [⚡ Primeros pasos](#-primeros-pasos)
+4. [⚙️ Variables de entorno](#-variables-de-entorno)
+5. [⚡ Creación de usuario admin (seed)](#-creación-de-usuario-admin-seed)
+6. [🐳 Docker Compose](#-docker-compose)
+7. [🛠️ Comandos Docker](#-comandos-docker)
+8. [🔒 Características principales](#-características-principales)
+9. [🏗️ Arquitectura](#-arquitectura)
+10. [🔁 Flujos de trabajo](#-flujos-de-trabajo)
+11. [🧑‍💼 Sistema de Roles y Permisos](#-sistema-de-roles-y-permisos)
+12. [🔗 Endpoints principales](#-endpoints-principales)
+13. [🕵️ Auditoría y seguridad](#-auditoría-y-seguridad)
+14. [👥 Gestión de usuarios](#-gestión-de-usuarios)
+15. [📚 Documentación Swagger](#-documentación-swagger)
+16. [🧪 Testing](#-testing)
+17. [📧 Notificaciones por correo](#-notificaciones-por-correo)
+18. [🌐 Zona horaria y auditoría](#-zona-horaria-y-auditoría)
+19. [💾 Backups de la base de datos](#-backups-de-la-base-de-datos)
+20. [🪪 Licencia](#-licencia)
+
+---
+
+## 📝 Descripción
 
 **SecureAuth-Pro** es una API backend de autenticación y gestión de usuarios, desarrollada en Node.js, TypeScript, Express y PostgreSQL, con enfoque en seguridad, trazabilidad y buenas prácticas modernas.
 
 ---
 
-## Características principales
+## 📦 Despliegue rápido sin clonar el repositorio
 
-- Registro, login y verificación de usuarios vía OTP (correo electrónico)
-- Recuperación y reseteo seguro de contraseñas
-- Autenticación y autorización basada en JWT (access y refresh tokens)
-- Sistema de roles (USER/ADMIN) con control de acceso granular
-- Gestión completa de usuarios con permisos basados en roles
-- Auditoría profesional de todas las acciones críticas
-- Pruebas automáticas de seguridad
-- Despliegue con Docker y Prisma
+> **No necesitas clonar el repositorio para desplegar la aplicación.**
+>
+> Solo necesitas:
+> - El archivo `docker-compose.prod.yml` (o `docker-compose.dev.yml` para desarrollo)
+> - El archivo `.env` con tus variables de entorno
+> - Docker y Docker Compose instalados en tu servidor
+
+### Ejemplo de despliegue en servidor
+
+1. Copia los archivos necesarios al servidor:
+   ```bash
+   scp docker-compose.prod.yml .env usuario@mi-servidor:/ruta/destino
+   ```
+2. En el servidor, levanta los servicios:
+   ```bash
+   cd /ruta/destino
+   docker-compose -f docker-compose.prod.yml up -d
+   ```
+
+> **Importante:** El archivo `.env` debe contener todas las variables de entorno requeridas por la aplicación. Puedes usar el `.env.example` del repositorio como referencia.
 
 ---
 
-## Arquitectura
+## ⚡ Primeros pasos
 
-- **Node.js + Express**: API RESTful modular y escalable
-- **Prisma ORM**: Modelado seguro y migraciones automáticas
-- **PostgreSQL**: Base de datos relacional robusta
-- **Docker**: Despliegue y desarrollo reproducible
-
----
-
-## Primeros pasos
+### 🛠️ Para desarrollo
 
 1. **Clona el repositorio y configura el entorno**
    ```bash
@@ -59,122 +78,137 @@
    cd SecureAuth-Pro
    cp .env.example .env # y edita tus variables
    ```
+2. **Configura las variables de entorno** (ver sección siguiente)
 
-2. **Construye la imagen de producción**
+3. **Crea la migración inicial si no existe**
    ```bash
-   npm run build:prod
+   docker exec secureauth-pro-app-dev-1 npx prisma migrate dev --name init
    ```
+4. **Crea un usuario admin** (ver sección [⚡ Creación de usuario admin (seed)](#-creación-de-usuario-admin-seed))
 
-3. **Levanta la base de datos y la app en producción**
-   ```bash
-   npm run prod:core
-   # o para levantar también pgadmin:
-   npm run prod
-   ```
-
-4. **(Desarrollo) Construye y levanta el entorno de desarrollo**
+5. **Construye la imagen de desarrollo**
    ```bash
    npm run build:dev
+   ```
+6. **Levanta los servicios en desarrollo**
+   ```bash
    npm run dev:docker:up
+   # o
+   docker-compose up app-dev db
    ```
-
-5. **Aplica migraciones de Prisma**
+7. **Aplica migraciones de Prisma (crea las tablas en la base de datos y genera cliente)**
    ```bash
-   npx prisma migrate dev --name init
+   docker exec secureauth-pro-app-dev-1 npx prisma migrate dev
    ```
-
-6. **Crea un usuario admin**
+8. **Ejecuta el seed para crear el usuario admin**
    ```bash
-   docker-compose exec db psql -U postgres -d secureauth
-   # Luego en SQL:
-   UPDATE users SET role = 'ADMIN' WHERE email = 'tu_email@ejemplo.com';
+   docker exec -it secureauth-pro-app-dev-1 npx ts-node prisma/seed.ts
+   # o si ya compilaste:
+   docker exec -it secureauth-pro-app-dev-1 node dist/prisma/seed.js
    ```
-
-7. **Corre los tests automáticos**
+9. **Corre los tests automáticos**
    ```bash
    docker exec secureauth-pro-app-dev-1 npm test
    ```
 
 ---
 
-## 🚀 Despliegue rápido en servidor usando Docker Hub
+### 🚀 Para producción
 
-Para desplegar la aplicación en cualquier servidor, solo necesitas:
+1. **Clona el repositorio y configura el entorno**
+   ```bash
+   git clone https://github.com/Diegomarte9/SecureAuth-Pro.git
+   cd SecureAuth-Pro
+   cp .env.example .env # y edita tus variables
+   ```
+2. **Configura las variables de entorno** (ver sección siguiente)
 
-1. El archivo `docker-compose.prod.yml` (o `docker-compose.dev.yml` para desarrollo)
-2. El archivo `.env` con tus variables de entorno
-3. Docker y Docker Compose instalados
+3. **Crea la migración inicial si no existe**
+   > Si es la primera vez que usas el proyecto o no tienes la carpeta `prisma/migrations`, primero debes crear la migración inicial desde desarrollo:
+   ```bash
+   docker exec secureauth-pro-app-dev-1 npx prisma migrate dev --name init
+   ```
+   > Esto generará la carpeta y archivos de migración necesarios.
+4. **Crea un usuario admin** (ver sección [⚡ Creación de usuario admin (seed)](#-creación-de-usuario-admin-seed))
 
-No es necesario clonar el repositorio ni tener el código fuente.
-
-### Ejemplo de despliegue
-
-```bash
-# Copia los archivos necesarios al servidor
-scp docker-compose.prod.yml .env usuario@mi-servidor:/ruta/destino
-
-# En el servidor:
-cd /ruta/destino
-docker-compose -f docker-compose.prod.yml up -d
-```
-
-> **Importante:** El archivo `.env` debe contener todas las variables de entorno requeridas por la aplicación. Puedes usar el `.env.example` del repositorio como referencia.
-
----
-
-## 🐳 Docker Compose para Producción y Desarrollo
-
-A partir de ahora puedes usar archivos separados para levantar el entorno de producción o desarrollo usando imágenes de Docker Hub sin necesidad de clonar el repositorio:
-
-### Producción
-Utiliza la imagen optimizada y publicada en Docker Hub (`diegomarte/secureauth-pro:latest`).
-
-```bash
-docker-compose -f docker-compose.prod.yml up -d
-```
-Esto levantará los servicios: app, db, pgadmin y backups. Puedes personalizar el archivo para tu entorno.
-
-### Desarrollo
-Utiliza la imagen de desarrollo (`diegomarte/secureauth-pro:dev`) y bind mount para el código fuente local.
-
-```bash
-docker-compose -f docker-compose.dev.yml up -d
-```
-Esto levantará los servicios: app-dev, db y pgadmin, permitiendo hot reload y desarrollo ágil.
-
-> **Nota:** Asegúrate de tener tu archivo `.env` configurado antes de levantar los servicios.
+5. **Construye la imagen de producción**
+   ```bash
+   npm run build:prod
+   ```
+6. **Levanta los servicios en producción**
+   ```bash
+   npm run prod
+   # o
+   docker-compose up -d app db pgadmin db-backup
+   ```
+7. **Aplica migraciones de Prisma (crea las tablas en la base de datos)**
+   ```bash
+   docker exec secureauth-pro-app-1 npx prisma migrate deploy
+   ```
+8. **Ejecuta el seed para crear el usuario admin**
+   ```bash
+   docker exec -it secureauth-pro-app-1 node dist/prisma/seed.js
+   ```
 
 ---
 
-## 🐳 Comandos Docker Simplificados
+## ⚙️ Variables de entorno
 
-### Producción
-- **Build:**
-  ```bash
-  npm run build:prod
-  ```
-- **Levantar servicios (app, db, pgadmin y backups):**
-  ```bash
-  npm run prod
-  ```
-- **Levantar servicios (solo app, db y backups):**
-  ```bash
-  npm run prod:core
-  ```
-- **Build y levantar todo:**
-  ```bash
-  npm run build:prod && npm run prod
+- `DATABASE_URL` — URL de conexión a PostgreSQL
+- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — Secretos para JWT
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — Configuración de email
+- `OTP_EXPIRES_MINUTES` — Minutos de validez del OTP
+- `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX` — Rate limiting
+- `CORS_ORIGIN` — Origen permitido para CORS
+- `ADMIN_EMAIL` — Correo del administrador que recibirá notificaciones de nuevos registros. Ejemplo:
+  ```env
+  ADMIN_EMAIL=admin@tudominio.com
   ```
 
-### Desarrollo
-- **Build:** `npm run build:dev`
-- **Levantar:** `npm run dev:docker:up`
-- **Build y levantar:** `npm run build:dev && npm run dev:docker:up`
+Ver `.env.example` para la lista completa.
 
-### Control
-- **Detener todo:** `npm run down`
+---
 
-### Equivalencias docker-compose
+## ⚡ Creación de usuario admin (seed)
+
+Para crear un usuario admin inicial en la base de datos puedes usar los scripts de seed incluidos en la carpeta `prisma/`:
+
+- `prisma/seed.example.ts`: Ejemplo seguro, con datos ficticios. Puedes subirlo a GitHub.
+- `prisma/seed.ts`: Script real para tu entorno. **No lo subas a GitHub.**
+
+### ¿Cómo usar el seed?
+1. Copia `prisma/seed.example.ts` a `prisma/seed.ts` y edita los datos por los reales de tu admin (email, nombre, contraseña, etc).
+2. Ejecuta el seed **dentro del contenedor Docker de la app**:
+   ```bash
+   docker exec -it secureauth-pro-app-dev-1 npx ts-node prisma/seed.ts
+   ```
+   > Cambia el nombre del contenedor si usas otro (puedes ver el nombre con `docker ps`).
+3. El usuario admin quedará creado o actualizado en la base de datos.
+
+**Importante:** Agrega `prisma/seed.ts` a tu `.gitignore` para evitar subir datos sensibles:
+```bash
+# En tu .gitignore
+prisma/seed.ts
+```
+
+---
+
+## 🐳 Docker Compose
+
+- **Producción:**
+  ```bash
+  docker-compose -f docker-compose.prod.yml up -d
+  ```
+- **Desarrollo:**
+  ```bash
+  docker-compose -f docker-compose.dev.yml up -d
+  ```
+
+> Asegúrate de tener tu archivo `.env` configurado antes de levantar los servicios.
+
+---
+
+## 🛠️ Comandos Docker
 
 | Comando npm                | Equivalente docker-compose                  |
 |---------------------------|---------------------------------------------|
@@ -189,14 +223,35 @@ Esto levantará los servicios: app-dev, db y pgadmin, permitiendo hot reload y d
 
 ---
 
-## Flujos de trabajo recomendados
+## 🔒 Características principales
+
+- Registro, login y verificación de usuarios vía OTP (correo electrónico)
+- Recuperación y reseteo seguro de contraseñas
+- Autenticación y autorización basada en JWT (access y refresh tokens)
+- Sistema de roles (USER/ADMIN) con control de acceso granular
+- Gestión completa de usuarios con permisos basados en roles
+- Auditoría profesional de todas las acciones críticas
+- Pruebas automáticas de seguridad
+- Despliegue con Docker y Prisma
+
+---
+
+## 🏗️ Arquitectura
+
+- **Node.js + Express**: API RESTful modular y escalable
+- **Prisma ORM**: Modelado seguro y migraciones automáticas
+- **PostgreSQL**: Base de datos relacional robusta
+- **Docker**: Despliegue y desarrollo reproducible
+
+---
+
+## 🔁 Flujos de trabajo
 
 ### Producción
 1. **Build:**
    ```bash
    npm run build:prod
    ```
-   (solo si hiciste cambios en el código)
 2. **Levantar servicios (app, db, pgadmin y backups):**
    ```bash
    npm run prod
@@ -211,16 +266,13 @@ Esto levantará los servicios: app-dev, db y pgadmin, permitiendo hot reload y d
    ```
 
 ### Desarrollo
-1. **Build:**  
-   `npm run build:dev`
-2. **Levantar servicios:**  
-   `npm run dev:docker:up`
-3. **Build y levantar todo:**  
-   `npm run build:dev && npm run dev:docker:up`
+1. **Build:**  `npm run build:dev`
+2. **Levantar servicios:**  `npm run dev:docker:up`
+3. **Build y levantar todo:**  `npm run build:dev && npm run dev:docker:up`
 
 ---
 
-## Sistema de Roles y Permisos
+## 🧑‍💼 Sistema de Roles y Permisos
 
 - **USER:** Ver y editar solo su propia información.
 - **ADMIN:** Ver, editar y eliminar cualquier usuario, listar todos los usuarios.
@@ -229,7 +281,7 @@ Esto levantará los servicios: app-dev, db y pgadmin, permitiendo hot reload y d
 
 ---
 
-## Endpoints principales
+## 🔗 Endpoints principales
 
 | Método | Endpoint      | Descripción                        | Roles permitidos         |
 |--------|--------------|------------------------------------|--------------------------|
@@ -239,48 +291,9 @@ Esto levantará los servicios: app-dev, db y pgadmin, permitiendo hot reload y d
 | PUT    | `/users/:id` | Actualizar usuario                 | Propio usuario o ADMIN   |
 | DELETE | `/users/:id` | Eliminar usuario (soft delete)     | ADMIN                    |
 
-**Ejemplo de uso:**
-```bash
-# Login para obtener token
-POST /auth/login
-{
-  "email": "admin@example.com",
-  "password": "Password123!"
-}
-
-# Listar usuarios (solo admin)
-GET /users
-Authorization: Bearer <admin_token>
-
-# Ver usuario específico
-GET /users/123
-Authorization: Bearer <user_token>
-
-# Actualizar información propia
-PUT /users/123
-Authorization: Bearer <user_token>
-{
-  "first_name": "Nuevo Nombre",
-  "email": "nuevo@email.com"
-}
-```
-
 ---
 
-## Variables de entorno
-
-- `DATABASE_URL` — URL de conexión a PostgreSQL
-- `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` — Secretos para JWT
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — Configuración de email
-- `OTP_EXPIRES_MINUTES` — Minutos de validez del OTP
-- `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX` — Rate limiting
-- `CORS_ORIGIN` — Origen permitido para CORS
-
-Ver `.env.example` para la lista completa.
-
----
-
-## Auditoría y seguridad
+## 🕵️ Auditoría y seguridad
 
 - Contraseñas hasheadas con bcrypt
 - Validación exhaustiva de datos con DTOs y class-validator
@@ -296,24 +309,9 @@ Ver `.env.example` para la lista completa.
 - Control de acceso basado en roles (RBAC)
 - Validación de permisos a nivel de servicio
 
-### Eventos auditados
-- Intentos de login (exitosos y fallidos)
-- Bloqueo de cuenta por intentos fallidos
-- Accesos no autorizados
-- Refresh de tokens
-- Logout
-- Solicitudes de reinicio y cambios de contraseña
-- Expiración de contraseñas
-- Validación de OTP
-- Creación y verificación de cuenta
-- Cambios en estado (activo/inactivo)
-- Cambios de email
-- Visualización, actualización y eliminación de usuarios
-- Intentos de acceso no autorizado
-
 ---
 
-## Gestión de usuarios
+## 👥 Gestión de usuarios
 
 - **Soft Delete:** Los usuarios eliminados no se borran físicamente, solo se marcan como inactivos (`is_active = false`).
 - **Cambio de roles:** Solo vía base de datos:
@@ -327,29 +325,15 @@ Ver `.env.example` para la lista completa.
 
 ---
 
-## Documentación Swagger
+## 📚 Documentación Swagger
 
 - Accede a la documentación en: [http://localhost:3000/api-docs](http://localhost:3000/api-docs)
 - En producción, la ruta solo estará disponible si defines la variable de entorno `SWAGGER_ENABLE=true`.
 - Puedes descargar el JSON de la especificación desde la interfaz de Swagger UI para generar clientes en otros lenguajes.
 
-**Ejemplo de autenticación (login):**
-```json
-POST /auth/login
-{
-  "email": "user@example.com",
-  "password": "Password123!"
-}
-```
-
-Agrega el token JWT en el header:
-```
-Authorization: Bearer <accessToken>
-```
-
 ---
 
-## Testing
+## 🧪 Testing
 
 - Pruebas automáticas en `tests/auth/` y `tests/users/`
 - Ejecuta `npm test` para validar la seguridad del sistema en local
@@ -361,7 +345,7 @@ Authorization: Bearer <accessToken>
 
 ---
 
-## Notificaciones por correo
+## 📧 Notificaciones por correo
 
 El sistema envía notificaciones automáticas por correo electrónico en los siguientes eventos de seguridad y cuenta:
 
@@ -375,27 +359,13 @@ Asegúrate de configurar correctamente las variables SMTP en tu `.env` para que 
 
 ---
 
-## Zona horaria y auditoría
+## 🌐 Zona horaria y auditoría
 
 Todos los timestamps y logs de auditoría se almacenan en formato UTC (tiempo universal coordinado), siguiendo las mejores prácticas para sistemas distribuidos y multiusuario.
 
-- **¿Por qué UTC?**
-  - Evita problemas de horario de verano y diferencias regionales.
-  - Permite comparar eventos de diferentes países sin ambigüedad.
-
-- **¿Cómo saber la hora local?**
-  - Convierte el timestamp UTC a tu zona horaria local usando herramientas como:
-    - JavaScript/Node.js: [`date-fns-tz`](https://date-fns.org/v2.29.3/docs/Time-Zones) o [`moment-timezone`](https://momentjs.com/timezone/)
-    - PostgreSQL: `SELECT created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santo_Domingo'`
-    - Linux/macOS: `TZ=America/Santo_Domingo date -d '2024-06-21T12:57:18Z'`
-
-- **Importante:**
-  - La "Z" al final del timestamp significa que está en UTC.
-  - No pierdes información: siempre puedes convertir a cualquier zona horaria.
-
 ---
 
-## Backups de la base de datos
+## 💾 Backups de la base de datos
 
 Puedes realizar backups de tu base de datos PostgreSQL de forma manual o automática:
 
@@ -413,32 +383,44 @@ Esto generará un archivo SQL con la fecha y hora en el nombre.
 
 El proyecto incluye un servicio `db-backup` en `docker-compose.yml` que realiza backups automáticos diarios y los guarda en `./db_backups`.
 
-- El backup se ejecuta automáticamente cada día.
-- Puedes ajustar la frecuencia y retención en el archivo `docker-compose.yml` (variables `SCHEDULE`, `BACKUP_KEEP_DAYS`, etc).
-- Para iniciar el servicio de backup automático:
+---
 
-```bash
-docker-compose up -d db-backup
-```
+## 🪪 Licencia
 
-- Para verificar los backups generados:
-
-```bash
-ls db_backups/
-```
-
-### Restaurar un backup
-
-Para restaurar un backup generado (manual o automático):
-
-```bash
-cat db_backups/backup_YYYYMMDD_HHMMSS.sql | docker exec -i secureauth-pro-db-1 psql -U postgres -d secureauth
-```
-
-Reemplaza `YYYYMMDD_HHMMSS` por la fecha y hora del archivo que quieras restaurar.
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
 
 ---
 
-## Licencia
+## ⚠️ Importante: ¡Nunca subas a producción sin la carpeta de migraciones!
 
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+> **Si subes tu proyecto a producción sin la carpeta `prisma/migrations`, Prisma NO creará tus tablas de negocio (usuarios, OTP, etc.), solo la tabla `_prisma_migrations`.**
+
+### ¿Por qué ocurre esto?
+- Prisma solo aplica migraciones que ya existen en la carpeta `prisma/migrations`.
+- Si solo tienes el archivo `schema.prisma` pero no hay migraciones generadas, al ejecutar:
+  ```bash
+  docker exec secureauth-pro-app-1 npx prisma migrate deploy
+  ```
+  verás:
+  ```
+  No migration found in prisma/migrations
+  No pending migrations to apply.
+  ```
+- **Resultado:** Solo se crea la tabla `_prisma_migrations` y tu app no funcionará.
+
+### Flujo correcto para tener todas las tablas:
+1. **En desarrollo:**
+   - Ejecuta:
+     ```bash
+     docker exec secureauth-pro-app-dev-1 npx prisma migrate dev --name init
+     ```
+   - Esto crea la carpeta y archivos de migración en `prisma/migrations/`.
+2. **Sube el código a producción incluyendo la carpeta `prisma/migrations`.**
+3. **En producción:**
+   - Ejecuta:
+     ```bash
+     docker exec secureauth-pro-app-1 npx prisma migrate deploy
+     ```
+   - Ahora sí, Prisma aplicará las migraciones y creará todas las tablas.
+
+> **Nunca omitas este paso. Si no tienes la carpeta de migraciones, tu base de datos estará vacía (excepto por `_prisma_migrations`).**

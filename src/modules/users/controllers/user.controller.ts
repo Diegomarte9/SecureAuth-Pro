@@ -69,4 +69,28 @@ export class UsersController {
       next(err);
     }
   }
+
+  async approveUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const adminId = (req as any).user?.sub;
+      // Aquí podrías verificar el rol admin si no lo hace el middleware
+      const user = await this.usersService.approveUser(id, adminId);
+      res.status(200).json({ message: 'Usuario aprobado', user });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async rejectUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const { id } = req.params;
+      const adminId = (req as any).user?.sub;
+      // Aquí podrías verificar el rol admin si no lo hace el middleware
+      const user = await this.usersService.rejectUser(id, adminId);
+      res.status(200).json({ message: 'Usuario rechazado', user });
+    } catch (err) {
+      next(err);
+    }
+  }
 }

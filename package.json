@@ -9,7 +9,7 @@
   "scripts": {
     "prepare": "husky install",
     "dev": "nodemon --watch src --ext ts,js --exec ts-node src/server.ts",
-    "dev:docker:up": "docker-compose up app-dev db",
+    "dev:up": "docker-compose up app-dev db pgadmin",
     "dev:docker:build": "docker-compose build --no-cache app-dev",
     "build": "tsc",
     "build:prod": "docker-compose build --no-cache app",

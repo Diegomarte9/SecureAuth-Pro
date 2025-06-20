@@ -21,6 +21,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/src ./src
+COPY --from=builder /app/prisma/migrations ./prisma/migrations
 
 EXPOSE 3000
 CMD ["node", "dist/server.js"]
@@ -32,5 +33,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY . .
+COPY --from=builder /app/prisma/migrations ./prisma/migrations
 EXPOSE 3000
 CMD ["npm", "run", "dev"]

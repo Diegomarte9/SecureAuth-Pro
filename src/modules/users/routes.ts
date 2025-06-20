@@ -48,4 +48,12 @@ usersRouter.delete('/:id', authMiddleware, checkRole(['ADMIN']), async (req, res
   }
 });
 
+usersRouter.post('/:id/approve', authMiddleware, checkRole(['ADMIN']), async (req, res, next) => {
+  await users.approveUser(req, res, next);
+});
+
+usersRouter.post('/:id/reject', authMiddleware, checkRole(['ADMIN']), async (req, res, next) => {
+  await users.rejectUser(req, res, next);
+});
+
 export default usersRouter;

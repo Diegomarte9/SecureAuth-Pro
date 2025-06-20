@@ -9,7 +9,7 @@ export class AuthController {
     try {
       const { username, email, first_name, last_name, password } = req.body;
       await this.authService.signUp({ username, email, first_name, last_name, password });
-      res.status(201).json({ message: 'Usuario creado. OTP enviado al correo.' });
+      res.status(201).json({ message: 'Solicitud de registro enviada. Un administrador revisará tu solicitud.' });
     } catch (err) {
       next(err);
     }

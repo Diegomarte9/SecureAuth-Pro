@@ -2,8 +2,10 @@
 import { PrismaClient, Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { auditLog } from '../../../shared/auditLogger';
+import { EmailService } from '../../auth/services/email.service';
 
 const prisma = new PrismaClient();
+const emailService = new EmailService();
 
 export class UsersService {
   /**
@@ -175,5 +177,31 @@ export class UsersService {
       data: { is_active: false },
     });
     auditLog('user_soft_deleted', { userId: id }, currentUserId);
+  }
+
+  /**
+   * Aprueba la solicitud de registro de un usuario
+   */
+  async approveUser(id: string, adminId: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw Object.assign(new Error('Usuario no encontrado'), { statusCode: 404 });
+    if (user.status !== 'pending') throw Object.assign(new Error('Solo se pueden aprobar usuarios pendientes'), { statusCode: 400 });
+    const updated = await prisma.user.update({ where: { id }, data: { status: 'active' } });
+    auditLog('user_approved', { userId: id, adminId }, adminId);
+    await emailService.sendUserApprovedEmail(user.email);
+    return updated;
+  }
+
+  /**
+   * Rechaza la solicitud de registro de un usuario
+   */
+  async rejectUser(id: string, adminId: string) {
+    const user = await prisma.user.findUnique({ where: { id } });
+    if (!user) throw Object.assign(new Error('Usuario no encontrado'), { statusCode: 404 });
+    if (user.status !== 'pending') throw Object.assign(new Error('Solo se pueden rechazar usuarios pendientes'), { statusCode: 400 });
+    const updated = await prisma.user.update({ where: { id }, data: { status: 'rejected' } });
+    auditLog('user_rejected', { userId: id, adminId }, adminId);
+    await emailService.sendUserRejectedEmail(user.email);
+    return updated;
   }
 }
