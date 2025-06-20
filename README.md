@@ -16,7 +16,8 @@
 13. [Testing](#testing)
 14. [Notificaciones por correo](#notificaciones-por-correo)
 15. [Zona horaria y auditoría](#zona-horaria-y-auditoría)
-16. [Licencia](#licencia)
+16. [Backups de la base de datos](#backups-de-la-base-de-datos)
+17. [Licencia](#licencia)
 
 ---
 
@@ -89,7 +90,7 @@
 
 7. **Corre los tests automáticos**
    ```bash
-   npm test
+  docker exec secureauth-pro-app-dev-1 npm test
    ```
 
 ---
@@ -278,7 +279,12 @@ Authorization: Bearer <accessToken>
 ## Testing
 
 - Pruebas automáticas en `tests/auth/` y `tests/users/`
-- Ejecuta `npm test` para validar la seguridad del sistema
+- Ejecuta `npm test` para validar la seguridad del sistema en local
+- **Para correr los tests dentro de Docker (recomendado):**
+
+  ```bash
+  docker exec secureauth-pro-app-dev-1 npm test
+  ```
 
 ---
 
@@ -313,6 +319,44 @@ Todos los timestamps y logs de auditoría se almacenan en formato UTC (tiempo un
 - **Importante:**
   - La "Z" al final del timestamp significa que está en UTC.
   - No pierdes información: siempre puedes convertir a cualquier zona horaria.
+
+---
+
+## Backups de la base de datos
+
+Puedes realizar backups de tu base de datos PostgreSQL de forma manual o automática:
+
+### Backup manual
+
+Ejecuta el siguiente script para crear un backup manual en el directorio `./db_backups`:
+
+```bash
+./backup_db.sh
+```
+
+Esto generará un archivo SQL con la fecha y hora en el nombre.
+
+### Backup automático (Docker)
+
+El proyecto incluye un servicio `db-backup` en `docker-compose.yml` que realiza backups automáticos diarios y los guarda en `./db_backups`.
+
+- El backup se ejecuta automáticamente cada día.
+- Puedes ajustar la frecuencia y retención en el archivo `docker-compose.yml` (variables `SCHEDULE`, `BACKUP_KEEP_DAYS`, etc).
+- Para iniciar el servicio de backup automático:
+
+```bash
+docker-compose up -d db-backup
+```
+
+### Restaurar un backup
+
+Para restaurar un backup generado (manual o automático):
+
+```bash
+cat db_backups/backup_YYYYMMDD_HHMMSS.sql | docker exec -i secureauth-pro-db-1 psql -U postgres -d secureauth
+```
+
+Reemplaza `YYYYMMDD_HHMMSS` por la fecha y hora del archivo que quieras restaurar.
 
 ---
 

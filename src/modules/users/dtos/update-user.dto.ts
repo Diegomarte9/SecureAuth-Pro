@@ -1,4 +1,3 @@
-// src/modules/users/dtos/update-user.dto.ts
 import { IsEmail, IsNotEmpty, IsOptional, IsString, Matches, Validate } from 'class-validator';
 import { PasswordsMatchValidator } from '../../../shared/passwordsMatch.validator';
 

@@ -1,4 +1,3 @@
-// src/server.ts
 import 'reflect-metadata';
 import { config } from './config/env';
 import { createApp } from './app';
