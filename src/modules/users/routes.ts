@@ -92,21 +92,58 @@ usersRouter.get('/:id', authMiddleware, async (req, res, next): Promise<void> =>
  * @swagger
  * /users:
  *   post:
- *     summary: Crea un nuevo usuario
+ *     summary: Crea un nuevo usuario (requiere autenticación y rol ADMIN)
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     description: >
+ *       Solo los usuarios con rol ADMIN pueden crear nuevos usuarios.
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/CreateUserDto'
+ *             type: object
+ *             required:
+ *               - username
+ *               - email
+ *               - first_name
+ *               - last_name
+ *               - password
+ *               - passwordConfirm
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 example: johndoe
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: johndoe@example.com
+ *               first_name:
+ *                 type: string
+ *                 example: John
+ *               last_name:
+ *                 type: string
+ *                 example: Doe
+ *               password:
+ *                 type: string
+ *                 format: password
+ *                 example: "Password123!"
+ *               passwordConfirm:
+ *                 type: string
+ *                 format: password
+ *                 example: "Password123!"
  *     responses:
  *       201:
  *         description: Usuario creado exitosamente
  *       400:
  *         description: Error de validación
+ *       401:
+ *         description: No autorizado
+ *       403:
+ *         description: Permisos insuficientes
  */
-usersRouter.post('/', validateDto(CreateUserDto), async (req, res, next): Promise<void> => {
+usersRouter.post('/', authMiddleware, checkRole(['ADMIN']), validateDto(CreateUserDto), async (req, res, next): Promise<void> => {
   try {
     await users.create(req, res, next);
   } catch (error) {
