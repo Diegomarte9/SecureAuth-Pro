@@ -5,19 +5,21 @@
 2. [Características principales](#características-principales)
 3. [Arquitectura](#arquitectura)
 4. [Primeros pasos](#primeros-pasos)
-5. [Comandos Docker Simplificados](#comandos-docker-simplificados)
-6. [Flujos de trabajo recomendados](#flujos-de-trabajo-recomendados)
-7. [Sistema de Roles y Permisos](#sistema-de-roles-y-permisos)
-8. [Endpoints principales](#endpoints-principales)
-9. [Variables de entorno](#variables-de-entorno)
-10. [Auditoría y seguridad](#auditoría-y-seguridad)
-11. [Gestión de usuarios](#gestión-de-usuarios)
-12. [Documentación Swagger](#documentación-swagger)
-13. [Testing](#testing)
-14. [Notificaciones por correo](#notificaciones-por-correo)
-15. [Zona horaria y auditoría](#zona-horaria-y-auditoría)
-16. [Backups de la base de datos](#backups-de-la-base-de-datos)
-17. [Licencia](#licencia)
+5. [🚀 Despliegue rápido en servidor usando Docker Hub](#despliegue-rápido-en-servidor-usando-docker-hub)
+6. [Comandos Docker Simplificados](#comandos-docker-simplificados)
+7. [🐳 Docker Compose para Producción y Desarrollo](#docker-compose-para-producción-y-desarrollo)
+8. [Flujos de trabajo recomendados](#flujos-de-trabajo-recomendados)
+9. [Sistema de Roles y Permisos](#sistema-de-roles-y-permisos)
+10. [Endpoints principales](#endpoints-principales)
+11. [Variables de entorno](#variables-de-entorno)
+12. [Auditoría y seguridad](#auditoría-y-seguridad)
+13. [Gestión de usuarios](#gestión-de-usuarios)
+14. [Documentación Swagger](#documentación-swagger)
+15. [Testing](#testing)
+16. [Notificaciones por correo](#notificaciones-por-correo)
+17. [Zona horaria y auditoría](#zona-horaria-y-auditoría)
+18. [Backups de la base de datos](#backups-de-la-base-de-datos)
+19. [Licencia](#licencia)
 
 ---
 
@@ -92,6 +94,55 @@
    ```bash
    docker exec secureauth-pro-app-dev-1 npm test
    ```
+
+---
+
+## 🚀 Despliegue rápido en servidor usando Docker Hub
+
+Para desplegar la aplicación en cualquier servidor, solo necesitas:
+
+1. El archivo `docker-compose.prod.yml` (o `docker-compose.dev.yml` para desarrollo)
+2. El archivo `.env` con tus variables de entorno
+3. Docker y Docker Compose instalados
+
+No es necesario clonar el repositorio ni tener el código fuente.
+
+### Ejemplo de despliegue
+
+```bash
+# Copia los archivos necesarios al servidor
+scp docker-compose.prod.yml .env usuario@mi-servidor:/ruta/destino
+
+# En el servidor:
+cd /ruta/destino
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+> **Importante:** El archivo `.env` debe contener todas las variables de entorno requeridas por la aplicación. Puedes usar el `.env.example` del repositorio como referencia.
+
+---
+
+## 🐳 Docker Compose para Producción y Desarrollo
+
+A partir de ahora puedes usar archivos separados para levantar el entorno de producción o desarrollo usando imágenes de Docker Hub sin necesidad de clonar el repositorio:
+
+### Producción
+Utiliza la imagen optimizada y publicada en Docker Hub (`diegomarte/secureauth-pro:latest`).
+
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+Esto levantará los servicios: app, db, pgadmin y backups. Puedes personalizar el archivo para tu entorno.
+
+### Desarrollo
+Utiliza la imagen de desarrollo (`diegomarte/secureauth-pro:dev`) y bind mount para el código fuente local.
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d
+```
+Esto levantará los servicios: app-dev, db y pgadmin, permitiendo hot reload y desarrollo ágil.
+
+> **Nota:** Asegúrate de tener tu archivo `.env` configurado antes de levantar los servicios.
 
 ---
 
