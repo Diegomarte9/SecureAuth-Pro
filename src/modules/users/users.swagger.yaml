@@ -1,0 +1,201 @@
+openapi: 3.0.0
+info:
+  title: SecureAuth-Pro Users API
+  version: 1.0.0
+  description: Endpoints de gestión de usuarios.
+  contact:
+    name: SecureAuth-Pro
+    url: https://github.com/Diegomarte9/SecureAuth-Pro
+servers:
+  - url: http://localhost:3000
+    description: Local server
+  - url: / # Relative for Docker
+    description: Relative path
+
+paths:
+  /users:
+    get:
+      summary: Lista usuarios (requiere autenticación y rol ADMIN)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+          description: Página de resultados
+        - in: query
+          name: limit
+          schema:
+            type: integer
+          description: Cantidad de resultados por página
+      responses:
+        200:
+          description: Lista de usuarios
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+    post:
+      summary: Crea un nuevo usuario (requiere autenticación y rol ADMIN)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      description: Solo los usuarios con rol ADMIN pueden crear nuevos usuarios.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserDto'
+      responses:
+        201:
+          description: Usuario creado exitosamente
+        400:
+          description: Error de validación
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+
+  /users/{id}:
+    get:
+      summary: Obtiene un usuario por ID (requiere autenticación)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      description: >
+        Un usuario normal solo puede ver su propia información.
+        Usuarios con rol ADMIN pueden ver información de cualquier usuario.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Usuario encontrado
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+        404:
+          description: Usuario no encontrado
+    put:
+      summary: Actualiza un usuario (requiere autenticación)
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      description: >
+        Los usuarios normales solo pueden actualizar su propia información.
+        Los usuarios con rol ADMIN pueden actualizar cualquier usuario.
+        Solo se pueden editar los campos básicos: username, email, first_name, last_name, password.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserDto'
+      responses:
+        200:
+          description: Usuario actualizado
+        400:
+          description: Error de validación
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+        404:
+          description: Usuario no encontrado
+    delete:
+      summary: Elimina un usuario (soft delete) - requiere autenticación y rol ADMIN
+      tags: [Users]
+      security:
+        - bearerAuth: []
+      description: Solo usuarios con rol ADMIN pueden eliminar usuarios.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: Usuario eliminado
+        401:
+          description: No autorizado
+        403:
+          description: Permisos insuficientes
+        404:
+          description: Usuario no encontrado
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    CreateUserDto:
+      type: object
+      required:
+        - username
+        - email
+        - first_name
+        - last_name
+        - password
+        - passwordConfirm
+      properties:
+        username:
+          type: string
+          example: johndoe
+        email:
+          type: string
+          format: email
+          example: johndoe@example.com
+        first_name:
+          type: string
+          example: John
+        last_name:
+          type: string
+          example: Doe
+        password:
+          type: string
+          format: password
+          example: "Password123!"
+        passwordConfirm:
+          type: string
+          format: password
+          example: "Password123!"
+    UpdateUserDto:
+      type: object
+      properties:
+        username:
+          type: string
+          example: johndoe
+        email:
+          type: string
+          format: email
+          example: johndoe@example.com
+        first_name:
+          type: string
+          example: John
+        last_name:
+          type: string
+          example: Doe
+        password:
+          type: string
+          format: password
+          example: "Password123!"
+        passwordConfirm:
+          type: string
+          format: password
+          example: "Password123!" 

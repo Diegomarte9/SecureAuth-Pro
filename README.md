@@ -98,9 +98,22 @@
 ## 🐳 Comandos Docker Simplificados
 
 ### Producción
-- **Build:** `npm run build:prod`
-- **Levantar servicios:** `npm run prod:core` (solo db+server) o `npm run prod` (db+server+pgadmin)
-- **Build y levantar:** `npm run build:prod && npm run start:prod`
+- **Build:**
+  ```bash
+  npm run build:prod
+  ```
+- **Levantar servicios (app, db, pgadmin y backups):**
+  ```bash
+  npm run prod
+  ```
+- **Levantar servicios (solo app, db y backups):**
+  ```bash
+  npm run prod:core
+  ```
+- **Build y levantar todo:**
+  ```bash
+  npm run build:prod && npm run prod
+  ```
 
 ### Desarrollo
 - **Build:** `npm run build:dev`
@@ -128,14 +141,23 @@
 ## Flujos de trabajo recomendados
 
 ### Producción
-1. **Build:**  
-   `npm run build:prod`
-2. **Levantar servicios:**  
-   `npm run prod:core`  
-   o  
-   `npm run prod`
-3. **Build y levantar todo:**  
-   `npm run build:prod && npm run start:prod`
+1. **Build:**
+   ```bash
+   npm run build:prod
+   ```
+   (solo si hiciste cambios en el código)
+2. **Levantar servicios (app, db, pgadmin y backups):**
+   ```bash
+   npm run prod
+   ```
+   o solo app, db y backups:
+   ```bash
+   npm run prod:core
+   ```
+3. **Levantar todo después de build:**
+   ```bash
+   npm run build:prod && npm run prod
+   ```
 
 ### Desarrollo
 1. **Build:**  
@@ -346,6 +368,12 @@ El proyecto incluye un servicio `db-backup` en `docker-compose.yml` que realiza 
 
 ```bash
 docker-compose up -d db-backup
+```
+
+- Para verificar los backups generados:
+
+```bash
+ls db_backups/
 ```
 
 ### Restaurar un backup

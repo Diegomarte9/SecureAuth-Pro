@@ -16,8 +16,8 @@
     "build:dev": "docker-compose build --no-cache app-dev",
     "start": "node dist/server.js",
     "start:prod": "docker-compose up app db",
-    "prod": "npm run build:prod && npm run start:prod",
-    "prod:core": "docker-compose up app db",
+    "prod": "docker-compose up -d app db pgadmin db-backup",
+    "prod:core": "docker-compose up app db db-backup",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
@@ -25,7 +25,8 @@
     "lint:fix": "eslint \"src/**/*.{ts,tsx}\" --fix",
     "test": "jest --runInBand --detectOpenHandles --forceExit",
     "test:watch": "jest --watch",
-    "down": "docker-compose down"
+    "down": "docker-compose down",
+    "down:volumenes": "docker-compose down -v"
   },
   "dependencies": {
     "@prisma/client": "^6.9.0",
@@ -37,6 +38,7 @@
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
     "helmet": "^8.1.0",
+    "js-yaml": "^4.1.0",
     "jsonwebtoken": "^9.0.2",
     "nodemailer": "^7.0.3",
     "reflect-metadata": "^0.2.2",
@@ -50,6 +52,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/jest": "^30.0.0",
+    "@types/js-yaml": "^4.0.9",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^24.0.1",
     "@types/nodemailer": "^6.4.17",
@@ -71,6 +74,8 @@
     "testMatch": [
       "**/tests/**/*.test.ts"
     ],
-    "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"]
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.ts"
+    ]
   }
 }

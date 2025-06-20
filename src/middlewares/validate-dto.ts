@@ -1,7 +1,6 @@
-// src/middlewares/validate-dto.ts
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
-import { Request, Response, NextFunction, RequestHandler } from 'express';
+import { RequestHandler } from 'express';
 
 export function validateDto<T>(
   dtoClass: new () => T,
