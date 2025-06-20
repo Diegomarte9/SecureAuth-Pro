@@ -13,8 +13,10 @@ import fs from 'fs';
 export function createApp() {
   const app = express();
 
-  // Trust proxy para que funcione correctamente con proxies (ngrok, Docker, Nginx, etc.)
-  app.set('trust proxy', true);
+  // Trust proxy configurable por variable de entorno
+  if (process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', true);
+  }
 
   // Seguridd HTTP headers
   app.use(helmet());
