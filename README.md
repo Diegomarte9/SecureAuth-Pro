@@ -14,7 +14,9 @@
 11. [Gestión de usuarios](#gestión-de-usuarios)
 12. [Documentación Swagger](#documentación-swagger)
 13. [Testing](#testing)
-14. [Licencia](#licencia)
+14. [Notificaciones por correo](#notificaciones-por-correo)
+15. [Zona horaria y auditoría](#zona-horaria-y-auditoría)
+16. [Licencia](#licencia)
 
 ---
 
@@ -277,6 +279,40 @@ Authorization: Bearer <accessToken>
 
 - Pruebas automáticas en `tests/auth/` y `tests/users/`
 - Ejecuta `npm test` para validar la seguridad del sistema
+
+---
+
+## Notificaciones por correo
+
+El sistema envía notificaciones automáticas por correo electrónico en los siguientes eventos de seguridad y cuenta:
+
+- **Verificación exitosa de cuenta:** Cuando el usuario verifica su cuenta tras ingresar el OTP.
+- **Muchos intentos fallidos de inicio de sesión:** Se envía una advertencia si hay varios intentos fallidos seguidos.
+- **Cuenta bloqueada:** Si la cuenta es bloqueada temporalmente por intentos fallidos, se notifica al usuario.
+- **Restablecimiento de contraseña exitoso:** Cuando el usuario restablece su contraseña correctamente.
+- **Cambio de contraseña exitoso:** Cuando el usuario cambia su contraseña desde el panel autenticado.
+
+Asegúrate de configurar correctamente las variables SMTP en tu `.env` para que el envío de correos funcione.
+
+---
+
+## Zona horaria y auditoría
+
+Todos los timestamps y logs de auditoría se almacenan en formato UTC (tiempo universal coordinado), siguiendo las mejores prácticas para sistemas distribuidos y multiusuario.
+
+- **¿Por qué UTC?**
+  - Evita problemas de horario de verano y diferencias regionales.
+  - Permite comparar eventos de diferentes países sin ambigüedad.
+
+- **¿Cómo saber la hora local?**
+  - Convierte el timestamp UTC a tu zona horaria local usando herramientas como:
+    - JavaScript/Node.js: [`date-fns-tz`](https://date-fns.org/v2.29.3/docs/Time-Zones) o [`moment-timezone`](https://momentjs.com/timezone/)
+    - PostgreSQL: `SELECT created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Santo_Domingo'`
+    - Linux/macOS: `TZ=America/Santo_Domingo date -d '2024-06-21T12:57:18Z'`
+
+- **Importante:**
+  - La "Z" al final del timestamp significa que está en UTC.
+  - No pierdes información: siempre puedes convertir a cualquier zona horaria.
 
 ---
 
