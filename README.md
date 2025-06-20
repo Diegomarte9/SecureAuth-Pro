@@ -90,7 +90,7 @@
 
 7. **Corre los tests automáticos**
    ```bash
-  docker exec secureauth-pro-app-dev-1 npm test
+   docker exec secureauth-pro-app-dev-1 npm test
    ```
 
 ---
