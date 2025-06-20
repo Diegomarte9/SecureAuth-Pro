@@ -55,26 +55,37 @@
    cp .env.example .env # y edita tus variables
    ```
 
-2. **Levanta la base de datos y la app con Docker**
+2. **Construye la imagen de producción**
    ```bash
+   npm run build:prod
+   ```
+
+3. **Levanta la base de datos y la app en producción**
+   ```bash
+   npm run prod:core
+   # o para levantar también pgadmin:
    npm run prod
-   # o para desarrollo:
+   ```
+
+4. **(Desarrollo) Construye y levanta el entorno de desarrollo**
+   ```bash
+   npm run build:dev
    npm run dev:docker:up
    ```
 
-3. **Aplica migraciones de Prisma**
+5. **Aplica migraciones de Prisma**
    ```bash
    npx prisma migrate dev --name init
    ```
 
-4. **Crea un usuario admin**
+6. **Crea un usuario admin**
    ```bash
    docker-compose exec db psql -U postgres -d secureauth
    # Luego en SQL:
    UPDATE users SET role = 'ADMIN' WHERE email = 'tu_email@ejemplo.com';
    ```
 
-5. **Corre los tests automáticos**
+7. **Corre los tests automáticos**
    ```bash
    npm test
    ```
