@@ -13,7 +13,7 @@ export class AuthService {
   private emailService = new EmailService();
 
   /**
-   * Registra un nuevo usuario y envía OTP de verificación
+   * Registra un nuevo usuario
    */
   async signUp(data: {
     username: string;

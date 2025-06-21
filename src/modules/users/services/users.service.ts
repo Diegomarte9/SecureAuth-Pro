@@ -186,7 +186,7 @@ export class UsersService {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) throw Object.assign(new Error('Usuario no encontrado'), { statusCode: 404 });
     if (user.status !== 'pending') throw Object.assign(new Error('Solo se pueden aprobar usuarios pendientes'), { statusCode: 400 });
-    const updated = await prisma.user.update({ where: { id }, data: { status: 'active' } });
+    const updated = await prisma.user.update({ where: { id }, data: { status: 'active', is_verified: true } });
     auditLog('user_approved', { userId: id, adminId }, adminId);
     await emailService.sendUserApprovedEmail(user.email);
     return updated;
