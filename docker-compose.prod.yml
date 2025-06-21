@@ -29,7 +29,7 @@ services:
       - pgadmin_data:/var/lib/pgadmin
 
   app:
-    image: diegomarte/secureauth-pro:latest
+    image: diegomarte/secureauth-pro:v2-latest
     depends_on:
       db:
         condition: service_healthy

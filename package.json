@@ -17,7 +17,7 @@
     "start": "node dist/server.js",
     "start:prod": "docker-compose up app db",
     "prod": "docker-compose up -d app db pgadmin db-backup",
-    "prod:core": "docker-compose up app db db-backup",
+    "prod:core": "docker-compose up -d app db db-backup",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:deploy": "prisma migrate deploy",
