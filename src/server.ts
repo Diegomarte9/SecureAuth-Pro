@@ -12,8 +12,8 @@ async function start() {
 
     // Crear y arrancar Express
     const app = createApp();
-    app.listen(config.port, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${config.port}`);
+    app.listen(config.port, '0.0.0.0', () => {
+      console.log(`🚀 Servidor corriendo en http://0.0.0.0:${config.port}`);
     });
   } catch (err) {
     console.error('❌ Error al iniciar la aplicación:', err);
